@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-tables
+      author: dswan
+      runInTransaction: false
+      comment: Create mtg DB tables
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - sqlFile:
+            path: db/release-1-0-0/changeset/001-create-tables.sql
+            relativeToChangelogFile: false
