@@ -11,22 +11,12 @@ import java.util.List;
 @Repository
 public interface CardRepository extends JpaRepository<Card, String> {
     @Query(value = """
-            SELECT
-                c.id,
-                c.name,
-                s.code,
-                s.name,
-                cs.rarity,
-                cs.collector_number
+            SELECT *
             FROM card c
             WHERE c.name = :card_name
-            JOIN card_set cs
-                ON card.id = cs.card_id
-            JOIN set s
-                on cs.set_code = s.code
-            ORDER BY s.name
+            ORDER BY c.set_code
             """, nativeQuery = true)
     List<Card> findAllPrintingsForCardName(
-            @Param("card_name") String cardName
+            @Param("card_name") String card_name
     );
 }

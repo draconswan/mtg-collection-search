@@ -1,0 +1,30 @@
+/* Ensure all columns align vertically */
+#checklist-grid {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+/* Make all columns the same height */
+.checklist-column {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Force h2 titles to match height */
+.set-title {
+    min-height: 3em; /* Adjust as needed */
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-col {
+    width: 25px;
+    min-width: 25px;
+    max-width: 25px;
+}
+
+.rarity-col {
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+}

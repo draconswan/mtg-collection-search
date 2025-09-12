@@ -34,3 +34,9 @@ spring:
     change-log: classpath:db/db.changelog-master.yaml
     default-schema: public
     contexts: dev
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+mtg:
+  ingest:
+    language: en
