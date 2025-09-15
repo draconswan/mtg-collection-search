@@ -18,6 +18,12 @@
             resize: vertical;
         }
     </style>
+    <script>
+        function generateDecklist() {
+            const form = document.querySelector("form");
+            form.action = "/decklist";
+        }
+    </script>
 </head>
 <body>
 <div class="container py-5">
@@ -46,6 +52,7 @@
         </div>
         <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary">Generate Checklist</button>
+            <button type="submit" class="btn btn-outline-success" onclick="generateDecklist()">Generate Decklist</button>
             <button type="reset" class="btn btn-outline-secondary">Clear</button>
         </div>
     </form>

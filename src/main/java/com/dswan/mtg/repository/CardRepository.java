@@ -14,6 +14,8 @@ public interface CardRepository extends JpaRepository<Card, String> {
             SELECT *
             FROM card c
             WHERE c.name = :card_name
+              OR split_part(c.name, ' // ', 1) = :card_name
+              OR split_part(c.name, ' // ', 2) = :card_name
             ORDER BY c.set_code
             """, nativeQuery = true)
     List<Card> findAllPrintingsForCardName(

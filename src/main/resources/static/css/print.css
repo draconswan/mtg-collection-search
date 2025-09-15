@@ -64,4 +64,8 @@
   td {
     word-break: break-word;
   }
+
+  #typeFilterDiv {
+    display: none;
+  }
 }

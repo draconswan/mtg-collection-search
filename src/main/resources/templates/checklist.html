@@ -67,12 +67,46 @@
                 }
             });
         }
+
+        function filterCardsByType() {
+            const checkedTypes = Array.from(document.querySelectorAll('#typeFilterDiv input[type="checkbox"]:checked'))
+                .map(cb => cb.value.toUpperCase());
+
+            const rows = document.querySelectorAll('table tbody tr');
+            rows.forEach(row => {
+                const types = row.dataset.types ? row.dataset.types.toUpperCase().split(',') : [];
+                const isVisible = types.some(type => checkedTypes.includes(type));
+                row.style.display = isVisible ? '' : 'none';
+            });
+
+            // Hide entire set group if all its rows are hidden
+            const setGroups = document.querySelectorAll('.checklist-column');
+            setGroups.forEach(group => {
+                const visibleRows = group.querySelectorAll('tbody tr:not([style*="display: none"])');
+                group.style.display = visibleRows.length > 0 ? '' : 'none';
+            });
+        }
+        document.addEventListener('DOMContentLoaded', filterCardsByType);
     </script>
 </head>
 <body class="container my-4">
 <h1 class="mb-4">Card Checklist</h1>
 <button class="btn btn-primary d-print-none mb-3" onclick="window.print()">🖨️ Print Checklist</button>
 <button class="btn btn-secondary mb-3 d-print-none" onclick="toggleLayout()">🧩 Toggle Layout</button>
+<div id="typeFilterDiv" class="mb-3 d-print-none">
+    <label class="form-label">Show Card Types:</label><br/>
+    <th:block th:each="type : ${cardTypes}">
+        <div class="form-check form-check-inline">
+            <input class="form-check-input typeCheckbox" type="checkbox"
+                   th:id="${'type_' + type.name()}"
+                   th:value="${type.name()}"
+                   th:checked="true"
+                   onchange="filterCardsByType()"/>
+            <label class="form-check-label" th:for="${'type_' + type.name()}"
+                   th:text="${type.name().toLowerCase().replace('_', ' ')}"></label>
+        </div>
+    </th:block>
+</div>
 <div class="row" id="checklist-grid">
     <div th:each="set : ${cardSets}" class="col-12 col-md-6 col-lg-4 mb-5 checklist-column">
         <!-- Set header -->
@@ -90,10 +124,11 @@
                     </th>
                     <th scope="col">Card Name</th>
                     <th scope="col" class="rarity-col">Rarity</th>
+                    <th scope="col" class="color-col">Color</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="card : ${set.cards}">
+                <tr th:each="card : ${set.cards}" th:attr="data-types=${#strings.listJoin(card.card_types.cardType, ',')}">
                     <td class="checkbox-col text-center">
                         <input type="checkbox"
                                class="form-check-input owned"
@@ -114,6 +149,7 @@
                     </td>
                     <td th:text="${card.name}"></td>
                     <td th:text="${card.rarity}" class="rarity-col"></td>
+                    <td th:text="${card.color}" class="color-col"></td>
                 </tr>
                 </tbody>
             </table>

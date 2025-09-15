@@ -104,7 +104,7 @@ public class DatabasePopulationService {
 
                             while (it.hasNextValue()) {
                                 Card card = it.nextValue();
-                                card.setGamesList(String.join(",", card.getGames()));
+                                card.populateFromJSON();
                                 if (!allowedLanguages.contains(String.valueOf(card.getLang()).toLowerCase())) {
                                     continue;
                                 }
