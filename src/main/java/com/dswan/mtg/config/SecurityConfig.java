@@ -38,9 +38,12 @@ public class SecurityConfig {
                         .permitAll()
                 )
                 .logout(logout -> logout
+                        .logoutUrl("/logout") // Explicitly define logout endpoint
                         .logoutSuccessUrl("/user/login?logout")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
+                        .permitAll()
                 );
-
         return http.build();
     }
 

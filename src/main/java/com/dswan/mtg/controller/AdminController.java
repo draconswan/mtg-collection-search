@@ -23,7 +23,7 @@ public class AdminController {
     @GetMapping("/users")
     public String userList(Model model) {
         model.addAttribute("users", userRepository.findAll());
-        return "admin/users"; // Thymeleaf view
+        return "users";
     }
 
     @PostMapping("/promote")

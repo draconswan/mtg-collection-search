@@ -90,6 +90,8 @@
     </script>
 </head>
 <body class="container my-4">
+<!-- Include header -->
+<div th:replace="fragments/header :: body"></div>
 <h1 class="mb-4">Card Checklist</h1>
 <button class="btn btn-primary d-print-none mb-3" onclick="window.print()">🖨️ Print Checklist</button>
 <button class="btn btn-secondary mb-3 d-print-none" onclick="toggleLayout()">🧩 Toggle Layout</button>

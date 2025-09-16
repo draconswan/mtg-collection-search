@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+<div class="container-fluid bg-light py-2 mb-4 border-bottom">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <a th:href="@{/search/input}" class="btn btn-outline-primary me-2">Search</a>
+
+            <!-- Admin button visible only to ROLE_ADMIN -->
+            <a th:if="${#authorization.expression('hasRole(''ADMIN'')')}"
+               th:href="@{/admin/users}" class="btn btn-outline-dark me-2">
+                Admin Panel
+            </a>
+        </div>
+
+        <!-- Logout button -->
+        <form th:action="@{/logout}" method="post" class="d-inline">
+            <button type="submit" class="btn btn-outline-danger">Logout</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

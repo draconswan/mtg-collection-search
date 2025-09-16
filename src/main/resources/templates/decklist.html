@@ -51,6 +51,8 @@
     </script>
 </head>
 <body>
+<!-- Include header -->
+<div th:replace="fragments/header :: body"></div>
 <div class="container py-4">
     <h1 class="mb-4">Deck Checklist</h1>
     <h6 class="text-muted" th:text="'Total cards: ' + ${totalQuantity}"></h6>

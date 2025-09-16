@@ -8,6 +8,7 @@ import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
+import org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect;
 
 import javax.sql.DataSource;
 
@@ -34,5 +35,10 @@ public class AppConfig {
         return JsonMapper.builder()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .build();
+    }
+
+    @Bean
+    public SpringSecurityDialect springSecurityDialect() {
+        return new SpringSecurityDialect();
     }
 }

@@ -57,23 +57,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         userRepository.save(user);
     }
 
-    public UserDetailsDto authenticate(String username, String rawPassword) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-            throw new BadCredentialsException("Invalid password");
-        }
-
-        UserDetailsDto userDetails = new UserDetailsDto(user);
-
-        UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authToken);
-
-        return userDetails;
-    }
-
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
