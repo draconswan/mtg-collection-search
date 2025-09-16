@@ -1,24 +1,25 @@
 package com.dswan.mtg.controller;
 
-import com.dswan.mtg.domain.Card;
-import com.dswan.mtg.domain.CardEntry;
-import com.dswan.mtg.domain.CardType;
-import com.dswan.mtg.domain.CardTypeInfo;
+import com.dswan.mtg.domain.cards.Card;
+import com.dswan.mtg.domain.cards.CardEntry;
+import com.dswan.mtg.domain.cards.CardType;
 import com.dswan.mtg.dto.CardSetDTO;
 import com.dswan.mtg.repository.CardRepository;
 import com.dswan.mtg.util.CardColorComparator;
+import com.dswan.mtg.util.CardNameNormalizer;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.thymeleaf.util.StringUtils;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
+@Slf4j
+@RequestMapping("/search")
 public class CardChecklistController {
     private static final List<CardType> TYPE_ORDER = List.of(
             CardType.PLANESWALKER, CardType.CREATURE, CardType.INSTANT, CardType.SORCERY, CardType.ARTIFACT, CardType.ENCHANTMENT, CardType.BATTLE, CardType.LAND
@@ -107,7 +108,11 @@ public class CardChecklistController {
                     }
 
                     if (!StringUtils.isEmpty(name) && !name.equals("Unknown")) {
-                        List<Card> matches = cardRepository.findAllPrintingsForCardName(name);
+                        String normalizedName = CardNameNormalizer.normalizeCardName(name);
+                        List<Card> matches = cardRepository.findAllPrintingsForCardName(normalizedName);
+                        if (matches.isEmpty()) {
+                            log.warn("Failed to find card with name: {}, normalized: {}", name, normalizedName);
+                        }
                         Card card = matches.isEmpty() ? null : matches.stream().filter(card1 -> !SET_TYPE_FILTER.contains(card1.getSet_type())).findFirst().orElse(null);
                         return new CardEntry(quantity, card);
                     } else {
@@ -125,7 +130,17 @@ public class CardChecklistController {
                         ).thenComparing(entry -> entry.getCard().getName(), String.CASE_INSENSITIVE_ORDER)
                 )
                 .toList();
-        model.addAttribute("decklist", cardEntries);
+        Map<String, List<CardEntry>> groupedDecklist = new LinkedHashMap<>();
+        Map<String, Integer> typeQuantities = new LinkedHashMap<>();
+        for (CardEntry entry : cardEntries) {
+            String type = entry.getCard().getCard_types().getCardType().getLast().toString();
+            groupedDecklist.computeIfAbsent(type, k -> new ArrayList<>()).add(entry);
+            typeQuantities.merge(type, entry.getQuantity(), Integer::sum);
+        }
+        int totalQuantity = typeQuantities.values().stream().mapToInt(Integer::intValue).sum();
+        model.addAttribute("groupedDecklist", groupedDecklist);
+        model.addAttribute("typeQuantities", typeQuantities);
+        model.addAttribute("totalQuantity", totalQuantity);
         return "decklist";
     }
 }

@@ -1,6 +1,6 @@
 package com.dswan.mtg.dto;
 
-import com.dswan.mtg.domain.Card;
+import com.dswan.mtg.domain.cards.Card;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

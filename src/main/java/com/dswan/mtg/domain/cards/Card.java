@@ -1,4 +1,4 @@
-package com.dswan.mtg.domain;
+package com.dswan.mtg.domain.cards;
 
 import com.dswan.mtg.util.CardColorComparator;
 import com.fasterxml.jackson.annotation.JsonProperty;

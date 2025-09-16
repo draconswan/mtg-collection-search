@@ -53,21 +53,18 @@
 <body>
 <div class="container py-4">
     <h1 class="mb-4">Deck Checklist</h1>
+    <h6 class="text-muted" th:text="'Total cards: ' + ${totalQuantity}"></h6>
     <div class="row">
         <!-- Left Column: Checklist -->
         <div class="col-md-6">
             <form>
                 <div class="row g-1">
-                    <div th:each="cardEntry, iterStat : ${decklist}">
-                        <!-- Optional type header -->
-                        <div th:if="${iterStat.index == 0 or cardEntry.card.card_types.cardType.getLast() != decklist[iterStat.index - 1].card.card_types.cardType.getLast()}">
-                            <h5 class="mt-4 mb-2" th:text="${cardEntry.card.card_types.cardType.getLast()}"></h5>
-                        </div>
+                    <div th:each="entryGroup : ${groupedDecklist}">
+                        <h5 class="mt-4 mb-2" th:text="${entryGroup.key + ' (' + typeQuantities[entryGroup.key] + ')'}"></h5>
 
-                        <!-- Card entry -->
-                        <div class="form-check">
+                        <div th:each="cardEntry : ${entryGroup.value}" class="form-check">
                             <input class="form-check-input" type="checkbox"
-                                   th:id="${#strings.replace(cardEntry.card.name, '[^a-zA-Z0-9]', '_')}"/>
+                                   th:id="${#strings.replace(cardEntry.card.name, '[^a-zA-Z0-9]', '_')}" />
                             <label class="form-check-label"
                                    th:for="${#strings.replace(cardEntry.card.name, '[^a-zA-Z0-9]', '_')}"
                                    th:text="${cardEntry.quantity + ' ' + cardEntry.card.name}"></label>

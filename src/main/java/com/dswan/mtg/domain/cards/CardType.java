@@ -1,4 +1,4 @@
-package com.dswan.mtg.domain;
+package com.dswan.mtg.domain.cards;
 
 import java.util.Objects;
 

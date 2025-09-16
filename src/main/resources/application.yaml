@@ -1,14 +1,3 @@
-logging:
-  level:
-    org:
-      hibernate:
-        SQL: OFF
-        type.descriptor.sql: OFF
-        orm.jdbc.bind: OFF
-        orm.jdbc.extract: OFF
-        engine.internal.StatisticalLoggingSessionEventListener: OFF
-        persister.entity: OFF
-        event.internal: OFF
 spring:
   application:
     name: MTG Collection Search
@@ -24,6 +13,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     properties:
       hibernate:
+        format_sql: true
         jdbc:
           batch_size: 1000
         order_inserts: true

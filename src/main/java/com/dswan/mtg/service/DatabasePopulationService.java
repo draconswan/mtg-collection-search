@@ -2,7 +2,7 @@ package com.dswan.mtg.service;
 
 import com.dswan.mtg.client.ScryfallBulkDataWebClientService;
 import com.dswan.mtg.domain.DataVersion;
-import com.dswan.mtg.domain.Card;
+import com.dswan.mtg.domain.cards.Card;
 import com.dswan.mtg.dto.BulkDataItem;
 import com.dswan.mtg.dto.BulkDataResponse;
 import com.dswan.mtg.dto.UpdateResult;

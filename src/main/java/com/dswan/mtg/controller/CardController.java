@@ -1,7 +1,7 @@
 package com.dswan.mtg.controller;
 
 import com.dswan.mtg.dto.CardListRequest;
-import com.dswan.mtg.domain.Card;
+import com.dswan.mtg.domain.cards.Card;
 import com.dswan.mtg.dto.CardSetDTO;
 import com.dswan.mtg.dto.UpdateResult;
 import com.dswan.mtg.repository.CardRepository;

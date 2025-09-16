@@ -2,3 +2,6 @@ databaseChangeLog:
   - include:
       file: db/release-1-0-0/db.changelog-1-0-0.yaml
       relativeToChangelogFile: false
+  - include:
+      file: db/release-1-0-1/db.changelog-1-0-1.yaml
+      relativeToChangelogFile: false

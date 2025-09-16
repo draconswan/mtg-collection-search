@@ -1,6 +1,6 @@
 package com.dswan.mtg.repository;
 
-import com.dswan.mtg.domain.Card;
+import com.dswan.mtg.domain.cards.Card;
 import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,9 +13,9 @@ public interface CardRepository extends JpaRepository<Card, String> {
     @Query(value = """
             SELECT *
             FROM card c
-            WHERE c.name = :card_name
-              OR split_part(c.name, ' // ', 1) = :card_name
-              OR split_part(c.name, ' // ', 2) = :card_name
+            WHERE lower(c.name) = lower(:card_name)
+              OR split_part(lower(c.name), ' // ', 1) = lower(:card_name)
+              OR split_part(lower(c.name), ' // ', 2) = lower(:card_name)
             ORDER BY c.set_code
             """, nativeQuery = true)
     List<Card> findAllPrintingsForCardName(

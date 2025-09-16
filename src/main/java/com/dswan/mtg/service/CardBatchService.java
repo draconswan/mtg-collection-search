@@ -1,6 +1,6 @@
 package com.dswan.mtg.service;
 
-import com.dswan.mtg.domain.Card;
+import com.dswan.mtg.domain.cards.Card;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Service;
