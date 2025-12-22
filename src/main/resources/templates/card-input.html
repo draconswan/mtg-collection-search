@@ -12,6 +12,7 @@
           integrity="sha384-4LISF5TTJX/fLmGSxO53rV4miRxdg84mZsxmO8Rx5jGtp/LbrixFETvWa5a6sESd"
           crossorigin="anonymous"
     />
+    <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         textarea {
             font-family: monospace;
@@ -19,53 +20,62 @@
         }
     </style>
     <script>
-        let actionOverride = null;
-
         function setAction(action) {
-            actionOverride = action;
+            const form = document.getElementById("cardListForm");
+            form.action = action;
         }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            const form = document.querySelector("form");
-            form.addEventListener("submit", (e) => {
-                if (actionOverride) {
-                    form.action = actionOverride;
-                }
-            });
-        });
     </script>
 </head>
 <body>
 <!-- Include header -->
-<div th:replace="fragments/header :: body"></div>
-<div class="container py-5">
+<div th:replace="~{fragments/header :: body}"></div>
+<div class="container py-5 magic-card-frame">
     <h1 class="mb-4">Paste Card Names</h1>
-    <form th:action="@{/search/checklist}" method="post">
+    <form id="cardListForm" th:action="@{/search/checklist}" method="post">
         <div class="mb-3">
             <label for="cardNames" class="form-label">Enter one card name per line:</label>
-            <textarea id="cardNames" name="cardNames" class="form-control"
+            <textarea th:text="${cardNames}" id="cardNames" name="cardNames" class="form-control"
                       placeholder="Lightning Bolt&#10;1 Black Lotus&#10;2x Counterspell"
+                      aria-labelledby="cardNamesLabel"
+                      aria-describedby="cardNamesHelp"
                       rows="10" required></textarea>
         </div>
         <div class="mb-3">
-            <label class="form-label">Select game types:</label>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="gameTypes" value="arena" id="arena">
-                <label class="form-check-label" for="arena">Arena</label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="gameTypes" value="paper" id="paper">
-                <label class="form-check-label" for="paper">Paper</label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="gameTypes" value="mtgo" id="mtgo">
-                <label class="form-check-label" for="mtgo">MTGO</label>
-            </div>
+            <fieldset aria-describedby="gameTypeHelp">
+                <legend class="form-label">Select game types:</legend>
+                <div id="gameTypeHelp" class="form-text">
+                    Choose one or more platforms where you play Magic.
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="gameTypes" value="arena" id="arena"
+                           aria-labelledby="labelArena">
+                    <label class="form-check-label" for="arena" id="labelArena">Arena</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="gameTypes" value="paper" id="paper"
+                           aria-labelledby="labelPaper">
+                    <label class="form-check-label" for="paper" id="labelPaper">Paper</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="gameTypes" value="mtgo" id="mtgo"
+                           aria-labelledby="labelMTGO">
+                    <label class="form-check-label" for="mtgo" id="labelMTGO">MTGO</label>
+                </div>
+            </fieldset>
         </div>
         <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary" onclick="setAction('/search/checklist')">Generate Checklist</button>
-            <button type="submit" class="btn btn-outline-success" onclick="setAction('/search/decklist')">Generate Decklist</button>
-            <button type="reset" class="btn btn-outline-secondary">Clear</button>
+            <button type="submit" class="btn btn-primary" onclick="setAction('/search/checklist')"
+                    aria-label="Generate checklist from entered card names">
+                Generate Checklist
+            </button>
+            <button type="submit" class="btn btn-outline-success" onclick="setAction('/search/decklist')"
+                    aria-label="Generate decklist from entered card names">
+                Generate Decklist
+            </button>
+            <button type="reset" class="btn btn-outline-secondary"
+                    aria-label="Clear all form inputs">
+                Clear
+            </button>
         </div>
     </form>
 </div>

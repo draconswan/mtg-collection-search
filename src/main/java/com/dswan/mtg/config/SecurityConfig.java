@@ -1,10 +1,9 @@
 package com.dswan.mtg.config;
 
-import com.dswan.mtg.service.CustomUserDetailsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -23,22 +22,23 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
+        http.csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/user/**").permitAll()
+                        .requestMatchers("/user/login**", "/user/register**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/search/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/search/**").hasRole("USER")
+                        .requestMatchers("/user/**").hasRole("USER")
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/user/login")
-                        .defaultSuccessUrl("/search/input", true)
+                        .defaultSuccessUrl("/search/input", false)
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutUrl("/logout") // Explicitly define logout endpoint
+                        .logoutUrl("/logout")
                         .logoutSuccessUrl("/user/login?logout")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
@@ -48,8 +48,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config, DaoAuthenticationProvider authProvider) throws Exception {
+        return new ProviderManager(authProvider);
     }
 
     @Bean

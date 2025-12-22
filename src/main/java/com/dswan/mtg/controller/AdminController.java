@@ -3,7 +3,8 @@ package com.dswan.mtg.controller;
 import com.dswan.mtg.domain.entity.UserRole;
 import com.dswan.mtg.repository.UserRepository;
 import com.dswan.mtg.service.CustomUserDetailsService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,8 +15,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/admin")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class AdminController {
+
+    @Value("${mtg.api.refreshEndpoint}")
+    private String apiRefreshEndpoint;
 
     private final UserRepository userRepository;
     private final CustomUserDetailsService userDetailsService;
@@ -23,6 +27,7 @@ public class AdminController {
     @GetMapping("/users")
     public String userList(Model model) {
         model.addAttribute("users", userRepository.findAll());
+        model.addAttribute("apiRefreshEndpoint", apiRefreshEndpoint);
         return "users";
     }
 

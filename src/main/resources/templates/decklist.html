@@ -22,7 +22,7 @@
     <script>
         function exportUncheckedCards() {
             const includeX = document.getElementById('includeX').checked;
-            const unchecked = Array.from(document.querySelector('form').querySelectorAll('.form-check-input'))
+            const unchecked = Array.from(document.getElementById('decklistForm').querySelectorAll('.form-check-input'))
                .filter(input => !input.checked)
                .map(input => {
                    const label = document.querySelector(`label[for="${input.id}"]`);
@@ -52,14 +52,14 @@
 </head>
 <body>
 <!-- Include header -->
-<div th:replace="fragments/header :: body"></div>
+<div th:replace="~{fragments/header :: body}"></div>
 <div class="container py-4">
     <h1 class="mb-4">Deck Checklist</h1>
     <h6 class="text-muted" th:text="'Total cards: ' + ${totalQuantity}"></h6>
     <div class="row">
         <!-- Left Column: Checklist -->
         <div class="col-md-6">
-            <form>
+            <form id="decklistForm">
                 <div class="row g-1">
                     <div th:each="entryGroup : ${groupedDecklist}">
                         <h5 class="mt-4 mb-2" th:text="${entryGroup.key + ' (' + typeQuantities[entryGroup.key] + ')'}"></h5>

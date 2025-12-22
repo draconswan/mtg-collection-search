@@ -22,4 +22,15 @@ public class UserController {
         model.addAttribute("pageTitle", "Registration");
         return "register";
     }
+
+    @GetMapping("/decks")
+    public String decks(Model model){
+        model.addAttribute("pageTitle", "User Decks");
+        return "decks";
+    }
+
+    @GetMapping("/user/deck/new")
+    public String newDeck(Model model){
+        return "new-deck";
+    }
 }

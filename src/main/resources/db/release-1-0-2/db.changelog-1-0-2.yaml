@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-decks-table
+      author: dswan
+      runInTransaction: false
+      comment: Create mtg user decks table
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - sqlFile:
+            path: db/release-1-0-2/changeset/001-create-user-decks.sql
+            relativeToChangelogFile: false

@@ -17,7 +17,7 @@ public class CardBatchService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void saveBatch(List<Card> batch) {
         for (Card card : batch) {
-            entityManager.persist(card);
+            entityManager.merge(card);
         }
         entityManager.flush();
         entityManager.clear();

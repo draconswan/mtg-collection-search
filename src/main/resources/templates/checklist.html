@@ -18,6 +18,63 @@
     <link rel="stylesheet" href="/css/print.css" media="print"/>
     <link rel="stylesheet" href="/css/style.css"/>
     <script>
+        const manaSymbolMap = {
+            W: "https://svgs.scryfall.io/card-symbols/W.svg",
+            U: "https://svgs.scryfall.io/card-symbols/U.svg",
+            B: "https://svgs.scryfall.io/card-symbols/B.svg",
+            R: "https://svgs.scryfall.io/card-symbols/R.svg",
+            G: "https://svgs.scryfall.io/card-symbols/G.svg",
+            C: "https://svgs.scryfall.io/card-symbols/C.svg",
+            0: "https://svgs.scryfall.io/card-symbols/0.svg",
+            1: "https://svgs.scryfall.io/card-symbols/1.svg",
+            2: "https://svgs.scryfall.io/card-symbols/2.svg",
+            3: "https://svgs.scryfall.io/card-symbols/3.svg",
+            4: "https://svgs.scryfall.io/card-symbols/4.svg",
+            5: "https://svgs.scryfall.io/card-symbols/5.svg",
+            6: "https://svgs.scryfall.io/card-symbols/6.svg",
+            7: "https://svgs.scryfall.io/card-symbols/7.svg",
+            8: "https://svgs.scryfall.io/card-symbols/8.svg",
+            9: "https://svgs.scryfall.io/card-symbols/9.svg",
+            10: "https://svgs.scryfall.io/card-symbols/10.svg",
+            11: "https://svgs.scryfall.io/card-symbols/11.svg",
+            12: "https://svgs.scryfall.io/card-symbols/12.svg",
+            13: "https://svgs.scryfall.io/card-symbols/13.svg",
+            14: "https://svgs.scryfall.io/card-symbols/14.svg",
+            15: "https://svgs.scryfall.io/card-symbols/15.svg",
+            16: "https://svgs.scryfall.io/card-symbols/16.svg",
+            17: "https://svgs.scryfall.io/card-symbols/17.svg",
+            18: "https://svgs.scryfall.io/card-symbols/18.svg",
+            19: "https://svgs.scryfall.io/card-symbols/19.svg",
+            20: "https://svgs.scryfall.io/card-symbols/20.svg",
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("td.color-col").forEach(cell => {
+                let colorText = cell.textContent.trim();
+                // Default to "C" if empty
+                if (!colorText) {
+                    colorText = "C";
+                }
+                cell.textContent = ""; // Clear existing text
+
+                [...colorText].forEach(char => {
+                    const symbol = manaSymbolMap[char];
+                    if (symbol) {
+                        const img = document.createElement("img");
+                        img.src = symbol;
+                        img.alt = char;
+                        img.width = 20;
+                        img.height = 20;
+                        img.style.marginRight = "4px";
+                        img.style.verticalAlign = "middle";
+                        cell.appendChild(img);
+                    } else {
+                        cell.appendChild(document.createTextNode(char));
+                    }
+                });
+            });
+        });
+
         document.addEventListener("DOMContentLoaded", function () {
             const ownedBoxes = document.querySelectorAll("input.owned[data-name]");
             const notFoundBoxes = document.querySelectorAll("input.not-found[data-name]");
@@ -50,6 +107,44 @@
                     if (this.checked && owned) {
                         owned.checked = false;
                     }
+                });
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const preview = document.getElementById('card-preview');
+            const cache = {}; // simple in-memory cache
+
+            document.querySelectorAll('.card-link').forEach(link => {
+                link.addEventListener('mouseenter', e => {
+                    const imgUrl = link.getAttribute('data-img-url');
+
+                    // if cached, reuse immediately
+                    if (cache[imgUrl]) {
+                        preview.innerHTML = cache[imgUrl];
+                        preview.style.display = 'block';
+                    } else {
+                        // debounce: only fetch once
+                        const img = new Image();
+                        img.src = imgUrl;
+                        img.alt = 'Card image';
+                        img.style.maxWidth = '200px';
+                        img.onload = () => {
+                            const html = `<img src="${imgUrl}" alt="Card image" style="max-width:200px;">`;
+                            cache[imgUrl] = html; // store in cache
+                            preview.innerHTML = html;
+                            preview.style.display = 'block';
+                        };
+                    }
+                });
+
+                link.addEventListener('mousemove', e => {
+                    preview.style.top = (e.pageY + 15) + 'px';
+                    preview.style.left = (e.pageX + 15) + 'px';
+                });
+
+                link.addEventListener('mouseleave', () => {
+                    preview.style.display = 'none';
                 });
             });
         });
@@ -91,7 +186,7 @@
 </head>
 <body class="container my-4">
 <!-- Include header -->
-<div th:replace="fragments/header :: body"></div>
+<div th:replace="~{fragments/header :: body}"></div>
 <h1 class="mb-4">Card Checklist</h1>
 <button class="btn btn-primary d-print-none mb-3" onclick="window.print()">🖨️ Print Checklist</button>
 <button class="btn btn-secondary mb-3 d-print-none" onclick="toggleLayout()">🧩 Toggle Layout</button>
@@ -110,7 +205,8 @@
     </th:block>
 </div>
 <div class="row" id="checklist-grid">
-    <div th:each="set : ${cardSets}" class="col-12 col-md-6 col-lg-4 mb-5 checklist-column">
+    <div id="card-preview"></div>
+    <div th:each="set : ${cardSets}" class="set-group col-12 col-md-6 col-lg-6 mb-5 checklist-column">
         <!-- Set header -->
         <h2 th:text="${set.setName + ' (' + set.setCode.toUpperCase() + ')'}" class="mb-3 set-title"></h2>
         <!-- Table -->
@@ -126,11 +222,13 @@
                     </th>
                     <th scope="col">Card Name</th>
                     <th scope="col" class="rarity-col">Rarity</th>
-                    <th scope="col" class="color-col">Color</th>
+                    <th scope="col" class="color-col">Casting Cost/Color Identity</th>
+                    <th scope="col" class="price-col">Prices</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="card : ${set.cards}" th:attr="data-types=${#strings.listJoin(card.card_types.cardType, ',')}">
+                <tr th:each="card : ${set.cards}"
+                    th:attr="data-types=${#strings.listJoin(card.card_types.cardType, ',')}">
                     <td class="checkbox-col text-center">
                         <input type="checkbox"
                                class="form-check-input owned"
@@ -149,9 +247,27 @@
                             Not Found for [[${card.name}]]
                         </label>
                     </td>
-                    <td th:text="${card.name}"></td>
+                    <td class="card-col">
+                        <a th:href="${card.scryfall_uri}"
+                           th:text="${card.name}"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="card-link"
+                           th:attr="data-img-url=${card.image_uris.normal}"></a>
+                    </td>
                     <td th:text="${card.rarity}" class="rarity-col"></td>
-                    <td th:text="${card.color}" class="color-col"></td>
+                    <td th:text="${card.castingCostAndIdentity}" class="color-col"></td>
+                    <td class="price-col">
+                        <span th:if="${card.prices.usd != null}">
+                            Normal: $<span th:text="${card.prices.usd}"></span><br/>
+                        </span>
+                        <span th:if="${card.prices.usd_foil != null}">
+                            Foil: $<span th:text="${card.prices.usd_foil}"></span><br/>
+                        </span>
+                        <span th:if="${card.prices.usd_etched != null}">
+                            Etched: $<span th:text="${card.prices.usd_etched}"></span>
+                        </span>
+                    </td>
                 </tr>
                 </tbody>
             </table>

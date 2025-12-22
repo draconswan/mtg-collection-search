@@ -10,6 +10,7 @@ import com.dswan.mtg.repository.DataVersionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tools.jackson.core.JsonParser;
@@ -31,7 +32,6 @@ import java.util.Set;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class DatabasePopulationService {
     @Value("${mtg.ingest.languages:en}")
@@ -44,6 +44,16 @@ public class DatabasePopulationService {
     private final DataVersionRepository dataVersionRepository;
     private final CardBatchService cardBatchService; // <-- injected batch service
     private final ObjectMapper objectMapper;
+
+    public DatabasePopulationService(ScryfallBulkDataWebClientService scryfallBulkDataWebClientService,
+                                     DataVersionRepository dataVersionRepository,
+                                     CardBatchService cardBatchService,
+                                     @Qualifier("jsonObjectMapper") ObjectMapper objectMapper) {
+        this.scryfallBulkDataWebClientService = scryfallBulkDataWebClientService;
+        this.dataVersionRepository = dataVersionRepository;
+        this.cardBatchService = cardBatchService;
+        this.objectMapper = objectMapper;
+    }
 
     public UpdateResult checkAndUpdateDatabase(boolean forceUpdate) {
         int count = 0;

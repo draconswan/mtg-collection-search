@@ -32,7 +32,8 @@ public class CardChecklistController {
     }
 
     @GetMapping("/input")
-    public String showInputForm() {
+    public String showInputForm(Model model) {
+        model.addAttribute("pageTitle", "Card List");
         return "card-input"; // maps to card-input.html
     }
 
@@ -84,6 +85,7 @@ public class CardChecklistController {
 
         model.addAttribute("cardSets", groupedBySet);
         model.addAttribute("cardTypes", CardType.values());
+        model.addAttribute("pageTitle", "Search Checklist");
         return "checklist";
     }
 
@@ -141,6 +143,7 @@ public class CardChecklistController {
         model.addAttribute("groupedDecklist", groupedDecklist);
         model.addAttribute("typeQuantities", typeQuantities);
         model.addAttribute("totalQuantity", totalQuantity);
+        model.addAttribute("pageTitle", "Decklist");
         return "decklist";
     }
 }

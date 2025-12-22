@@ -16,6 +16,9 @@ public interface CardRepository extends JpaRepository<Card, String> {
             WHERE lower(c.name) = lower(:card_name)
               OR split_part(lower(c.name), ' // ', 1) = lower(:card_name)
               OR split_part(lower(c.name), ' // ', 2) = lower(:card_name)
+              OR lower(c.flavor_name) = lower(:card_name)
+              OR split_part(lower(c.flavor_name), ' // ', 1) = lower(:card_name)
+              OR split_part(lower(c.flavor_name), ' // ', 2) = lower(:card_name)
             ORDER BY c.set_code
             """, nativeQuery = true)
     List<Card> findAllPrintingsForCardName(

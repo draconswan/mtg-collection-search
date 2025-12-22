@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: update-card-table
+      author: dswan
+      runInTransaction: false
+      comment: Add Flavor Name column to card
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - sqlFile:
+            path: db/release-1-0-3/changeset/001-add-flavor-name.sql
+            relativeToChangelogFile: false

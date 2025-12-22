@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${pageTitle != null ? pageTitle : 'Magic Checklist'}">Magic Checklist</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+          crossorigin="anonymous"
+    />
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+          integrity="sha384-4LISF5TTJX/fLmGSxO53rV4miRxdg84mZsxmO8Rx5jGtp/LbrixFETvWa5a6sESd"
+          crossorigin="anonymous"
+    />
+    <!-- Magic Card Styling -->
+    <style>
+        body {
+            background: url('https://www.transparenttextures.com/patterns/paper-fibers.png') repeat;
+            font-family: 'Garamond', 'Georgia', serif;
+            color: #2c2c2c;
+        }
+
+        .magic-card {
+            background: linear-gradient(to bottom right, #fdf6e3, #e0d8b0);
+            border: 2px solid #5c4422;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            max-width: 800px;
+            margin: 2rem auto;
+        }
+
+        .magic-header {
+            background-color: #5c4422;
+            color: #fdf6e3;
+            padding: 1rem 2rem;
+            border-bottom: 2px solid #3b2c1a;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-shadow: 1px 1px #3b2c1a;
+        }
+
+        .magic-footer {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+            color: #6c584c;
+        }
+
+        .btn-magic {
+            background-color: #5c4422;
+            color: #fdf6e3;
+            border: none;
+        }
+
+        .btn-magic:hover {
+            background-color: #3b2c1a;
+            color: #fff;
+        }
+    </style>
+    <script>
+        let actionOverride = null;
+
+        function setAction(action) {
+            actionOverride = action;
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.querySelector("form");
+            form.addEventListener("submit", (e) => {
+                if (actionOverride) {
+                    form.action = actionOverride;
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+
+<div th:fragment="magicLayout(content)">
+    <!-- Header Bar -->
+    <div class="magic-header d-flex justify-content-between align-items-center">
+        <span th:text="${pageTitle != null ? pageTitle : 'Magic Checklist'}"></span>
+        <div>
+            <a th:href="@{/search/input}" class="btn btn-sm btn-magic me-2">Search</a>
+            <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/users}" class="btn btn-sm btn-magic me-2">Admin Panel</a>
+            <form th:action="@{/logout}" method="post" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-magic">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Magic Card Content -->
+    <div class="magic-card">
+        <div th:insert="${content}"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="magic-footer">
+        &copy; 2025 Magic Checklist • Crafted by Daniel
+    </div>
+</div>
+
+</body>
+</html>

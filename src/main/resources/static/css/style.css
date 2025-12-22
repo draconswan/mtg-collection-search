@@ -24,7 +24,144 @@
 }
 
 .rarity-col {
-    width: 100px;
-    min-width: 100px;
-    max-width: 100px;
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+}
+
+.color-col {
+    width: 130px;
+    min-width: 130px;
+    max-width: 130px;
+}
+
+.price-col {
+    width: 130px;
+    min-width: 130px;
+    max-width: 130px;
+}
+
+body {
+    background: url('https://www.transparenttextures.com/patterns/paper-fibers.png') repeat;
+    font-family: 'Garamond', 'Georgia', serif;
+    color: #2c2c2c;
+}
+
+.magic-card {
+    background: linear-gradient(to bottom right, #fdf6e3, #e0d8b0);
+    border: 2px solid #5c4422;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    max-width: 800px;
+    margin: 2rem auto;
+}
+
+.magic-header {
+    background-color: #5c4422;
+    color: #fdf6e3;
+    padding: 1rem 2rem;
+    border-bottom: 2px solid #3b2c1a;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-shadow: 1px 1px #3b2c1a;
+}
+
+.magic-footer {
+    text-align: center;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: #6c584c;
+}
+
+.btn-magic {
+    background-color: #5c4422;
+    color: #fdf6e3;
+    border: none;
+}
+
+.btn-magic:hover {
+    background-color: #3b2c1a;
+    color: #fff;
+}
+
+.magic-card-frame {
+    background: linear-gradient(to bottom right, #fdf6e3, #e0d8b0);
+    border: 3px solid #5c4422;
+    border-radius: 16px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.4);
+    max-width: 600px;
+    margin: 3rem auto;
+    padding: 1.5rem;
+    font-family: 'Garamond', 'Georgia', serif;
+    position: relative;
+}
+
+.card-title-bar {
+    background-color: #5c4422;
+    color: #fdf6e3;
+    font-size: 1.5rem;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 12px 12px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-shadow: 1px 1px #3b2c1a;
+}
+
+.mana-cost {
+    font-size: 1.2rem;
+}
+
+.card-type-line {
+    background-color: #e0d8b0;
+    border-top: 2px solid #5c4422;
+    border-bottom: 2px solid #5c4422;
+    padding: 0.5rem 1rem;
+    font-style: italic;
+    color: #3b2c1a;
+}
+
+.card-text-box {
+    background-color: #fffdf5;
+    border: 2px solid #d4c4a0;
+    padding: 1rem;
+    margin-top: 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #2c2c2c;
+}
+
+.card-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: #6c584c;
+}
+
+#card-preview {
+    display: none;
+    position: absolute;
+    z-index: 9999;
+    border: 1px solid #ccc;
+    background: #fff;
+    padding: 5px;
+    pointer-events: none;   /* prevents blocking the link */
+    width: auto;
+    max-width: none;
+    white-space: nowrap;
+
+    /* visual polish */
+    border-radius: 8px;     /* rounded corners */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); /* soft shadow */
+}
+
+#card-preview img {
+    max-width: 200px;
+    height: auto;
+    display: block;
+    border-radius: 6px;     /* optional: round the image itself */
 }
