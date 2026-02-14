@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Card Checklist</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon"/>
+
+    <!-- Bootstrap -->
+    <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            crossorigin="anonymous"
+    />
+    <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+            crossorigin="anonymous"
+    />
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/css/style.css"/>
+    <link rel="stylesheet" href="/css/print.css" media="print"/>
+
+    <!-- Modular JS (deferred) -->
+    <script src="/js/mana-symbols.js" defer></script>
+    <script src="/js/checkbox-sync.js" defer></script>
+    <script src="/js/card-preview.js" defer></script>
+    <script src="/js/filters.js" defer></script>
+    <script src="/js/layout-toggle.js" defer></script>
+</head>
+
+<body class="container my-4">
+
+<!-- Header Fragment -->
+<div th:replace="~{fragments/header :: body}"></div>
+
+<main>
+    <h1 class="mb-4">Card Checklist</h1>
+
+    <!-- Action Buttons -->
+    <div class="d-flex gap-2 mb-3 d-print-none">
+        <button class="btn btn-primary" onclick="window.print()">🖨️ Print Checklist</button>
+        <button class="btn btn-secondary" onclick="toggleLayout()">🧩 Toggle Layout</button>
+    </div>
+
+    <!-- Type Filter -->
+    <section id="filters" class="mb-4 d-print-none">
+        <label class="form-label fw-bold">Show Card Types:</label><br/>
+
+        <th:block th:each="type : ${cardTypes}">
+            <div class="form-check form-check-inline">
+                <input class="form-check-input typeCheckbox"
+                       type="checkbox"
+                       th:id="${'type_' + type.name()}"
+                       th:value="${type.name()}"
+                       th:checked="true"
+                       onchange="filterCardsByType()"/>
+                <label class="form-check-label"
+                       th:for="${'type_' + type.name()}"
+                       th:text="${type.name().toLowerCase().replace('_', ' ')}"></label>
+            </div>
+        </th:block>
+
+        <!-- Missing-only filter -->
+        <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" id="missingOnly" onchange="filterMissing()">
+            <label class="form-check-label" for="missingOnly">Show only missing cards</label>
+        </div>
+    </section>
+
+    <!-- Card Preview Hover Element -->
+    <div id="card-preview"></div>
+
+    <!-- Checklist Grid -->
+    <section id="checklist-grid" class="row gy-5">
+        <section th:each="set : ${cardSets}"
+                 class="set-group col-12 col-md-6 col-lg-6 checklist-column">
+
+            <!-- Set Header -->
+            <header class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="set-title mb-0"
+                    th:text="${set.setName + ' (' + set.setCode.toUpperCase() + ')'}"></h2>
+
+                <button class="btn btn-sm btn-outline-secondary toggle-set">Toggle</button>
+            </header>
+
+            <!-- Card Table -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th scope="col" class="text-center" aria-label="Owned">
+                            <i class="bi bi-check-circle-fill text-success" title="Owned"></i>
+                        </th>
+                        <th scope="col" class="text-center" aria-label="Not Found">
+                            <i class="bi bi-x-circle-fill text-danger" title="Not Found"></i>
+                        </th>
+                        <th scope="col">Card Name</th>
+                        <th scope="col">Rarity</th>
+                        <th scope="col">Casting Cost / Identity</th>
+                        <th scope="col">Prices</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr th:each="card : ${set.cards}"
+                        th:attr="data-types=${#strings.listJoin(card.cardTypes.cardType, ',')}">
+
+                        <!-- Owned -->
+                        <td class="text-center">
+                            <input type="checkbox"
+                                   class="form-check-input owned"
+                                   th:id="'owned-' + ${card.id}"
+                                   th:attr="data-name=${card.name}"/>
+                            <label th:for="'owned-' + ${card.id}" class="visually-hidden">
+                                Owned for [[${card.name}]]
+                            </label>
+                        </td>
+
+                        <!-- Not Found -->
+                        <td class="text-center">
+                            <input type="checkbox"
+                                   class="form-check-input not-found"
+                                   th:id="'notfound-' + ${card.id}"
+                                   th:attr="data-name=${card.name}"/>
+                            <label th:for="'notfound-' + ${card.id}" class="visually-hidden">
+                                Not Found for [[${card.name}]]
+                            </label>
+                        </td>
+
+                        <!-- Card Name -->
+                        <td>
+                            <a th:href="${card.scryfallUri}"
+                               th:text="${card.displayName}"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="card-link"
+                               th:attr="data-img-url=${card.imageUris.normal}"/>
+                        </td>
+
+                        <!-- Rarity Badge -->
+                        <td>
+                            <span th:class="'badge rarity-' + ${card.rarity}">
+                                <span th:text="${card.rarity}"></span>
+                            </span>
+                        </td>
+
+                        <!-- Mana Symbols -->
+                        <td class="color-col"
+                            th:text="${card.castingCostAndIdentity}"></td>
+
+                        <!-- Prices -->
+                        <td class="price-col">
+                            <span th:if="${card.prices.usd != null}">
+                                Normal: $<span th:text="${card.prices.usd}"></span><br/>
+                            </span>
+                            <span th:if="${card.prices.usd_foil != null}">
+                                Foil: $<span th:text="${card.prices.usd_foil}"></span><br/>
+                            </span>
+                            <span th:if="${card.prices.usd_etched != null}">
+                                Etched: $<span th:text="${card.prices.usd_etched}"></span>
+                            </span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </section>
+</main>
+
+<!-- Print Footer -->
+<footer class="d-none d-print-block text-center mt-4">
+    <strong>Magic Checklist</strong><br/>
+    <span th:text="${#dates.format(#dates.createNow(), 'yyyy-MM-dd')}"></span>
+</footer>
+
+</body>
+</html>

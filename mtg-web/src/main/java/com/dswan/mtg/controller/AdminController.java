@@ -28,7 +28,7 @@ public class AdminController {
     public String userList(Model model) {
         model.addAttribute("users", userRepository.findAll());
         model.addAttribute("apiRefreshEndpoint", apiRefreshEndpoint);
-        return "admin-panel";
+        return "admin/admin-panel";
     }
 
     @PostMapping("/promote")

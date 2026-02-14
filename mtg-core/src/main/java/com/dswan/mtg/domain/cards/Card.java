@@ -1,15 +1,11 @@
 package com.dswan.mtg.domain.cards;
 
 import com.dswan.mtg.util.CardColorComparator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micrometer.common.util.StringUtils;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.PostLoad;
 import jakarta.persistence.Transient;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import tools.jackson.databind.ObjectMapper;
@@ -20,80 +16,121 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 @Slf4j
 public class Card {
-    @Id
+    //Fields from the Scryfall JSON
     private String id;
-    private String oracle_id;
+    private String oracleId;
     private String name;
-    private String flavor_name;
-    private String scryfall_uri;
-    @Transient
-    private Images image_uris;
-    private String images;
+    private String flavorName;
+    private String printedName;
     private String lang;
-    private String released_at;
-    @Transient
-    private CardTypeInfo card_types;
-    private String type_line;
-    @Transient
-    private List<String> color_identity;
-    private String color;
-    private String mana_cost;
-    @JsonProperty(value = "set")
-    private String set_code;
-    private String set_name;
-    private String set_type;
-    private String rarity;
-    private String collector_number;
-    @Transient
+    private String releasedAt;
+    private String scryfallUri;
+    private List<CardFace> cardFaces;
+    private Images imageUris;
+    private String manaCost;
+    private String typeLine;
+    private List<String> colorIdentity;
     private List<String> games;
-    private String gamesList;
-    @Transient
+    private String set;
+    private String setName;
+    private String setType;
+    private String collectorNumber;
+    private String rarity;
     private Prices prices;
+
+    //Database fields
+    private String images;
+    private String color;
+    private String gamesList;
     private String pricesList;
+
+    //Derived Fields
+    @Transient
+    private CardTypeInfo cardTypes;
+    @Transient
+    private Integer quantity = 0;
+    @Transient
+    private boolean checked = false;
     @Transient
     private String castingCostAndIdentity;
 
+    public String getDisplayName() {
+        if (StringUtils.isNotBlank(printedName)) {
+            return printedName;
+        }
+        if (StringUtils.isNotBlank(flavorName)) {
+            return flavorName + " (" + name + ")";
+        }
+        return name;
+    }
+
     public void populateFromJSON() {
-        this.card_types = CardTypeInfo.fromTypeLine(this.type_line);
-        this.gamesList = String.join(",", games);
-        if (!CollectionUtils.isEmpty(color_identity)) {
-            List<String> sortedColors = color_identity.stream()
-                    .sorted((o1, o2) -> {
-                        CardColorComparator cardColorComparator = new CardColorComparator();
-                        return cardColorComparator.compare(o1, o2);
-                    })
-                    .toList();
-            this.color = String.join("", sortedColors);
+        this.cardTypes = CardTypeInfo.fromTypeLine(this.typeLine);
+        if (games != null) {
+            this.gamesList = String.join(",", games);
         }
-        if (StringUtils.isNotEmpty(mana_cost)) {
-            this.mana_cost = mana_cost.replace("{", "").replace(",", "").replace("}", "");
+        if (!CollectionUtils.isEmpty(colorIdentity)) {
+            this.color = colorIdentity.stream()
+                    .sorted(new CardColorComparator())
+                    .reduce("", (a, b) -> a + b);
+        } else {
+            this.color = "";
         }
-        if (!CollectionUtils.isEmpty(color_identity) && StringUtils.isNotEmpty(mana_cost)) {
-            this.castingCostAndIdentity = mana_cost + " / " + color;
+        if (StringUtils.isNotEmpty(manaCost)) {
+            this.manaCost = manaCost.replace(" ", "");
+        } else if (CollectionUtils.isNotEmpty(this.cardFaces)) {
+            CardFace first = this.cardFaces.getFirst();
+            if (StringUtils.isNotEmpty(first.getManaCost())) {
+                this.manaCost = first.getManaCost().replace(" ", "");
+            } else {
+                this.manaCost = "";
+            }
+        } else {
+            this.manaCost = "";
+        }
+        if (!CollectionUtils.isEmpty(colorIdentity) && StringUtils.isNotEmpty(manaCost)) {
+            this.castingCostAndIdentity = manaCost + " / " + color;
         } else {
             this.castingCostAndIdentity = "";
         }
-        ObjectMapper objectMapper = new ObjectMapper();
-        this.pricesList = objectMapper.writeValueAsString(prices);
-        this.images = objectMapper.writeValueAsString(image_uris);
+        if (this.oracleId == null && CollectionUtils.isNotEmpty(this.cardFaces)) {
+            this.oracleId = this.cardFaces.getFirst().getOracleId();
+        }
+        if (imageUris == null && CollectionUtils.isNotEmpty(this.cardFaces)) {
+            this.imageUris = this.cardFaces.getFirst().getImageUris();
+        }
+        if (this.typeLine == null && CollectionUtils.isNotEmpty(this.cardFaces)) {
+            this.typeLine = this.cardFaces.getFirst().getTypeLine();
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            this.pricesList = mapper.writeValueAsString(prices);
+            this.images = mapper.writeValueAsString(imageUris);
+        } catch (Exception e) {
+            log.error("Error serializing JSON fields", e);
+        }
     }
 
-    @PostLoad
-    public void onLoad() {
-        this.card_types = CardTypeInfo.fromTypeLine(this.type_line);
-        if (!StringUtils.isEmpty(this.color)) {
-            this.color_identity = Arrays.asList(this.color.split(""));
+    public void hydrateFromEntity() {
+        this.cardTypes = CardTypeInfo.fromTypeLine(this.typeLine);
+        if (StringUtils.isNotEmpty(this.color)) {
+            this.colorIdentity = Arrays.asList(this.color.split(""));
         }
-        this.games = Arrays.asList(gamesList.split(","));
-        ObjectMapper objectMapper = new ObjectMapper();
-        if (!StringUtils.isEmpty(this.pricesList)) {
-            this.prices = objectMapper.readValue(pricesList, Prices.class);
+        if (StringUtils.isNotEmpty(this.gamesList)) {
+            this.games = Arrays.asList(gamesList.split(","));
         }
-        if (!StringUtils.isEmpty(this.images)) {
-            this.image_uris = objectMapper.readValue(images, Images.class);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            if (StringUtils.isNotEmpty(this.pricesList)) {
+                this.prices = mapper.readValue(pricesList, Prices.class);
+            }
+            if (StringUtils.isNotEmpty(this.images)) {
+                this.imageUris = mapper.readValue(images, Images.class);
+            }
+        } catch (Exception e) {
+            log.error("Error parsing JSON fields", e);
         }
     }
 }

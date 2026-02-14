@@ -11,20 +11,35 @@ import java.util.stream.Collectors;
 
 @Data
 public class UserDetailsDto implements UserDetails {
-    private String username;
-    private String password;
-    private List<GrantedAuthority> authorities;
+
+    private final User user;  // <-- store the actual domain user
+    private final List<GrantedAuthority> authorities;
 
     public UserDetailsDto(User user) {
-        this.username = user.getUsername();
-        this.password = user.getPassword();
+        this.user = user;
         this.authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName()))
                 .collect(Collectors.toList());
     }
 
     @Override
+    public String getUsername() {
+        return user.getUsername();
+    }
+
+    @Override
+    public String getPassword() {
+        return user.getPassword();
+    }
+
+    @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return authorities;
     }
+
+    // These can stay default or be customized
+    @Override public boolean isAccountNonExpired() { return true; }
+    @Override public boolean isAccountNonLocked() { return true; }
+    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override public boolean isEnabled() { return true; }
 }

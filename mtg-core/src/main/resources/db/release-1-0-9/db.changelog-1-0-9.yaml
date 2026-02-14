@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-checked-state
+      author: dswan
+      dbms: postgresql
+      runInTransaction: false
+      comment: Add checked state to decks
+      preConditions:
+        - onFail: MARK_RAN
+      changes:
+        - sqlFile:
+            path: db/release-1-0-9/changeset/001-add-checked-state.sql
+            relativeToChangelogFile: false

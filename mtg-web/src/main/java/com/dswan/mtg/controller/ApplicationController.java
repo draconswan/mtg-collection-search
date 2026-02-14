@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 public class ApplicationController {
 
-    @RequestMapping(value = "/**/{path:[^\\.]*}")
+    @RequestMapping(value = {"/", "/**/{path:[^\\.]*}"})
     public String redirect() {
-        return "redirect:/search";
+        return "redirect:/search/input";
     }
 }

@@ -20,3 +20,12 @@ databaseChangeLog:
   - include:
       file: db/release-1-0-6/db.changelog-1-0-6.yaml
       relativeToChangelogFile: false
+  - include:
+      file: db/release-1-0-7/db.changelog-1-0-7.yaml
+      relativeToChangelogFile: false
+  - include:
+      file: db/release-1-0-8/db.changelog-1-0-8.yaml
+      relativeToChangelogFile: false
+  - include:
+      file: db/release-1-0-9/db.changelog-1-0-9.yaml
+      relativeToChangelogFile: false

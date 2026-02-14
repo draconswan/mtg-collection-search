@@ -1,0 +1,2 @@
+ALTER TABLE user_deck_cards
+ADD COLUMN checked BOOLEAN DEFAULT FALSE;

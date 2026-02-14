@@ -32,7 +32,7 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/user/login")
-                        .defaultSuccessUrl("/search/input", false)
+                        .defaultSuccessUrl("/search/input", true)
                         .permitAll()
                 )
                 .logout(logout -> logout

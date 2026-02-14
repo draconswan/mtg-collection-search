@@ -8,7 +8,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
     <artifactId>mtg-web</artifactId>
-    <packaging>jar</packaging>
+<!--    <packaging>jar</packaging>-->
     <dependencies>
         <dependency>
             <groupId>com.dswan.mtg</groupId>

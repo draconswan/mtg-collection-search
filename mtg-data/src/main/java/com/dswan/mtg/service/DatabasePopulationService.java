@@ -3,6 +3,8 @@ package com.dswan.mtg.service;
 import com.dswan.mtg.client.ScryfallBulkDataWebClientService;
 import com.dswan.mtg.domain.DataVersion;
 import com.dswan.mtg.domain.cards.Card;
+import com.dswan.mtg.domain.entity.CardEntity;
+import com.dswan.mtg.domain.mapper.CardMapper;
 import com.dswan.mtg.dto.BulkDataItem;
 import com.dswan.mtg.dto.BulkDataResponse;
 import com.dswan.mtg.dto.UpdateResult;
@@ -108,7 +110,7 @@ public class DatabasePopulationService {
                             }
 
                             int batchSize = 1000;
-                            List<Card> batch = new ArrayList<>();
+                            List<CardEntity> batch = new ArrayList<>();
                             MappingIterator<Card> it = cardReader.readValues(parser);
 
                             while (it.hasNextValue()) {
@@ -117,7 +119,7 @@ public class DatabasePopulationService {
                                 if (!allowedLanguages.contains(String.valueOf(card.getLang()).toLowerCase())) {
                                     continue;
                                 }
-                                batch.add(card);
+                                batch.add(CardMapper.toEntity(card));
 
                                 if (batch.size() >= batchSize) {
                                     cardBatchService.saveBatch(batch);

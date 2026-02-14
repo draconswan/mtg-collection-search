@@ -1,21 +1,37 @@
-/* Ensure all columns align vertically */
+/* ---------------------------------------------
+   GRID & COLUMN LAYOUT
+--------------------------------------------- */
+
 #checklist-grid {
     display: flex;
     flex-wrap: wrap;
 }
 
-/* Make all columns the same height */
 .checklist-column {
     display: flex;
     flex-direction: column;
 }
 
-/* Force h2 titles to match height */
+.single-column .checklist-column {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+}
+
+/* ---------------------------------------------
+   SET TITLES
+--------------------------------------------- */
+
 .set-title {
-    min-height: 3em; /* Adjust as needed */
+    min-height: 3em;
     display: flex;
     align-items: center;
+    font-size: 1.4rem;
+    font-weight: 600;
 }
+
+/* ---------------------------------------------
+   TABLE COLUMN WIDTHS
+--------------------------------------------- */
 
 .checkbox-col {
     width: 25px;
@@ -39,7 +55,21 @@
     width: 130px;
     min-width: 130px;
     max-width: 130px;
+    white-space: nowrap;
 }
+
+.table td,
+.table th {
+    vertical-align: middle;
+}
+
+.color-col img {
+    vertical-align: middle;
+}
+
+/* ---------------------------------------------
+   MAGIC-THEMED BACKGROUND & CARD STYLES
+--------------------------------------------- */
 
 body {
     background: url('https://www.transparenttextures.com/patterns/paper-fibers.png') repeat;
@@ -142,26 +172,73 @@ body {
     color: #6c584c;
 }
 
-#card-preview {
-    display: none;
-    position: absolute;
-    z-index: 9999;
-    border: 1px solid #ccc;
-    background: #fff;
-    padding: 5px;
-    pointer-events: none;   /* prevents blocking the link */
-    width: auto;
-    max-width: none;
-    white-space: nowrap;
+/* ---------------------------------------------
+   CARD PREVIEW TOOLTIP
+--------------------------------------------- */
 
-    /* visual polish */
-    border-radius: 8px;     /* rounded corners */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); /* soft shadow */
+#card-preview {
+    position: fixed;
+    pointer-events: none;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 9999;
+}
+
+#card-preview.visible {
+    display: block;
+    opacity: 1;
 }
 
 #card-preview img {
     max-width: 200px;
     height: auto;
     display: block;
-    border-radius: 6px;     /* optional: round the image itself */
+    border-radius: 6px;
+}
+
+/* ---------------------------------------------
+   RARITY BADGES
+--------------------------------------------- */
+
+.badge.rarity-common {
+    background-color: #A8A8A8;
+    color: white;
+}
+
+.badge.rarity-uncommon {
+    background-color: #C0D1D9;
+    color: black;
+}
+
+.badge.rarity-rare {
+    background-color: #D4AF37;
+    color: black;
+}
+
+.badge.rarity-mythic {
+    background-color: #B22222;
+    color: white;
+}
+
+.badge[class*="rarity-"] {
+    font-size: 0.75rem;
+    padding: 0.35em 0.55em;
+    text-transform: capitalize;
+}
+
+/* ---------------------------------------------
+   COLLAPSIBLE SETS
+--------------------------------------------- */
+
+table.collapsed tbody {
+    display: none;
+}
+
+.toggle-set {
+    white-space: nowrap;
+}
+
+.toggle-icon {
+    transition: transform 0.2s ease;
 }

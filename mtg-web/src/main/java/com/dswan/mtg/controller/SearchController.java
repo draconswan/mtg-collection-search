@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.yaml.snakeyaml.util.Tuple;
 
 import java.util.*;
 
@@ -25,7 +26,7 @@ public class SearchController {
     @GetMapping("/input")
     public String showInputForm(Model model) {
         model.addAttribute("pageTitle", "Card List");
-        return "card-input";
+        return "search/card-input";
     }
 
     @PostMapping("/checklist")
@@ -45,17 +46,19 @@ public class SearchController {
         model.addAttribute("cardSets", groupedBySet);
         model.addAttribute("cardTypes", CardType.values());
         model.addAttribute("pageTitle", "Search Checklist");
-        return "checklist";
+        return "search/checklist";
     }
 
     @PostMapping("/decklist")
     public String showDecklist(@RequestParam("cardNames") String cardNamesRaw,
                                Model model) {
-        List<CardEntry> cardEntries = cardProcessingService.buildDecklist(cardNamesRaw);
+        Tuple<List<CardEntry>, List<String>> cardEntriesAndErrors = cardProcessingService.buildDecklist(cardNamesRaw);
+        List<CardEntry> cardEntries = cardEntriesAndErrors._1();
+        List<String> cardsNotFound = cardEntriesAndErrors._2();
         Map<String, List<CardEntry>> groupedDecklist = new LinkedHashMap<>();
         Map<String, Integer> typeQuantities = new LinkedHashMap<>();
         for (CardEntry entry : cardEntries) {
-            String type = entry.getCard().getCard_types().getCardType().getLast().toString();
+            String type = entry.getCard().getCardTypes().getCardType().getLast().toString();
             groupedDecklist.computeIfAbsent(type, k -> new ArrayList<>()).add(entry);
             typeQuantities.merge(type, entry.getQuantity(), Integer::sum);
         }
@@ -66,6 +69,7 @@ public class SearchController {
         model.addAttribute("typeQuantities", typeQuantities);
         model.addAttribute("totalQuantity", totalQuantity);
         model.addAttribute("pageTitle", "Decklist");
-        return "decklist";
+        model.addAttribute("cardsNotFound", cardsNotFound);
+        return "decks/decklist";
     }
 }
