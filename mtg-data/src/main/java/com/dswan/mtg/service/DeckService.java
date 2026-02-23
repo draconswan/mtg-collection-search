@@ -1,7 +1,9 @@
 package com.dswan.mtg.service;
 
+import com.dswan.mtg.domain.cards.Card;
 import com.dswan.mtg.domain.cards.Deck;
 import com.dswan.mtg.domain.entity.*;
+import com.dswan.mtg.domain.mapper.CardMapper;
 import com.dswan.mtg.domain.mapper.DeckMapper;
 import com.dswan.mtg.repository.CardRepository;
 import com.dswan.mtg.repository.DeckCardRepository;
@@ -30,33 +32,77 @@ public class DeckService {
     private final UserRepository userRepository;
 
     @Transactional
-    public Deck createDeck(Deck deck) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found: " + username));
-        DeckEntity deckEntity = DeckMapper.toEntity(deck);
-        deckEntity.setUser(user);
-        List<DeckCardEntity> pendingCards = new ArrayList<>(deckEntity.getCards());
-        deckEntity.setCards(new ArrayList<>());
-        deckEntity = deckRepository.save(deckEntity);
-        Long deckId = deckEntity.getId();
-
-        List<DeckCardEntity> finalCards = new ArrayList<>();
-        for (DeckCardEntity dce : pendingCards) {
-            DeckCardEntity newDce = new DeckCardEntity();
-            newDce.setDeckEntity(deckEntity);
-            newDce.setCard(dce.getCard());
-            DeckCardId id = new DeckCardId();
-            id.setDeckId(deckId);
-            id.setCardId(dce.getCard().getId());
-            newDce.setId(id);
-            newDce.setChecked(dce.getChecked());
-            newDce.setQuantity(dce.getQuantity());
-            finalCards.add(newDce);
+    public Deck saveDeck(Deck deck) {
+        DeckEntity entity;
+        if (deck.getId() == null) {
+            entity = DeckMapper.toNewEntity(deck);
+            entity.setUser(currentUser());
+            deckRepository.save(entity);
+        } else {
+            entity = deckRepository.findById(deck.getId())
+                    .orElseThrow(() -> new RuntimeException("Deck not found"));
+            DeckMapper.updateEntity(entity, deck);
         }
-        deckEntity.setCards(finalCards);
-        deckEntity = deckRepository.save(deckEntity);
-        return DeckMapper.toDomain(deckEntity);
+        // Sync cards safely
+        DeckMapper.syncCards(entity, deck);
+        deckRepository.save(entity);
+        return DeckMapper.toDomain(entity);
+    }
+
+    private User currentUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+    }
+
+    @Transactional
+    public Deck updateDeck(Deck deck) {
+        DeckEntity existing = deckRepository.findById(deck.getId())
+                .orElseThrow(() -> new RuntimeException("Deck not found"));
+
+        // Update simple fields
+        existing.setDeckName(deck.getName());
+        existing.setDeckType(deck.getType());
+
+        // Sync cards
+        syncCards(existing, deck);
+        return DeckMapper.toDomain(existing);
+    }
+
+    public static void syncCards(DeckEntity entity, Deck domain) {
+        // Remove cards not in incoming deck
+        entity.getCards().removeIf(existing ->
+                domain.getCards().stream()
+                        .noneMatch(c -> c.getId().equals(existing.getCard().getId()))
+        );
+
+        // Add or update incoming cards
+        for (Card card : domain.getCards()) {
+            entity.getCards().stream()
+                    .filter(e -> e.getCard().getId().equals(card.getId()))
+                    .findFirst()
+                    .ifPresentOrElse(
+                            e -> {
+                                e.setQuantity(card.getQuantity());
+                                e.setChecked(card.isChecked());
+                            },
+                            () -> {
+                                DeckCardEntity newCard = new DeckCardEntity();
+                                newCard.setDeckEntity(entity);
+                                newCard.setCard(CardMapper.toEntity(card));
+
+                                DeckCardId id = new DeckCardId();
+                                id.setDeckId(entity.getId());
+                                id.setCardId(card.getId());
+                                newCard.setId(id);
+
+                                newCard.setQuantity(card.getQuantity());
+                                newCard.setChecked(card.isChecked());
+
+                                entity.getCards().add(newCard);
+                            }
+                    );
+        }
     }
 
     @Transactional

@@ -44,40 +44,59 @@ public class DeckMapper {
         return deck;
     }
 
-    public static DeckEntity toEntity(Deck domain) {
-        if (domain == null) {
-            return null;
-        }
+    public static DeckEntity toNewEntity(Deck domain) {
         DeckEntity entity = new DeckEntity();
-        entity.setId(domain.getId());
         entity.setDeckName(domain.getName());
         entity.setDeckType(domain.getType());
         entity.setCreatedAt(domain.getCreatedAt() != null
                 ? domain.getCreatedAt().toOffsetDateTime()
                 : null);
-
         entity.setLastUpdated(domain.getLastUpdated() != null
                 ? domain.getLastUpdated().toOffsetDateTime()
                 : null);
-        if (domain.getCards() != null && !domain.getCards().isEmpty()) {
-            List<DeckCardEntity> deckCardEntities = domain.getCards().stream()
-                    .map(card -> {
-                        DeckCardEntity dce = new DeckCardEntity();
-                        dce.setDeckEntity(entity);
-                        dce.setCard(CardMapper.toEntity(card));
-                        DeckCardId id = new DeckCardId();
-                        id.setDeckId(entity.getId());
-                        id.setCardId(card.getId());
-                        dce.setId(id);
-                        dce.setQuantity(card.getQuantity());
-                        dce.setChecked(card.isChecked());
-                        return dce;
-                    })
-                    .collect(Collectors.toList());
-            entity.setCards(deckCardEntities);
-        } else {
-            entity.setCards(new ArrayList<>());
-        }
         return entity;
+    }
+
+    public static void updateEntity(DeckEntity entity, Deck domain) {
+        entity.setDeckName(domain.getName());
+        entity.setDeckType(domain.getType());
+        entity.setLastUpdated(domain.getLastUpdated() != null
+                ? domain.getLastUpdated().toOffsetDateTime()
+                : null);
+    }
+
+    public static void syncCards(DeckEntity entity, Deck domain) {
+        // Remove cards not in incoming deck
+        entity.getCards().removeIf(existing ->
+                domain.getCards().stream()
+                        .noneMatch(c -> c.getId().equals(existing.getCard().getId()))
+        );
+        // Add or update incoming cards
+        for (Card card : domain.getCards()) {
+            entity.getCards().stream()
+                    .filter(e -> e.getCard().getId().equals(card.getId()))
+                    .findFirst()
+                    .ifPresentOrElse(
+                            e -> {
+                                e.setQuantity(card.getQuantity());
+                                e.setChecked(card.isChecked());
+                            },
+                            () -> {
+                                DeckCardEntity newCard = new DeckCardEntity();
+                                newCard.setDeckEntity(entity);
+                                newCard.setCard(CardMapper.toEntity(card));
+
+                                DeckCardId id = new DeckCardId();
+                                id.setDeckId(entity.getId());
+                                id.setCardId(card.getId());
+                                newCard.setId(id);
+
+                                newCard.setQuantity(card.getQuantity());
+                                newCard.setChecked(card.isChecked());
+
+                                entity.getCards().add(newCard);
+                            }
+                    );
+        }
     }
 }

@@ -1,14 +1,12 @@
 package com.dswan.mtg.controller;
 
 import com.dswan.mtg.domain.cards.Deck;
-import com.dswan.mtg.service.DeckBuilderService;
 import com.dswan.mtg.service.DeckService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -25,8 +23,8 @@ public class DeckController {
     }
 
     @PostMapping
-    public ResponseEntity<Deck> createDeck(@RequestBody Deck deck) {
-        Deck created = deckService.createDeck(deck);
+    public ResponseEntity<Deck> saveDeck(@RequestBody Deck deck) {
+        Deck created = deckService.saveDeck(deck);
         return ResponseEntity
                 .created(URI.create("/api/v1/decks/" + created.getId()))
                 .body(created);

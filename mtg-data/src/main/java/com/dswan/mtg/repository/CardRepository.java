@@ -27,4 +27,20 @@ public interface CardRepository extends JpaRepository<CardEntity, String> {
             ORDER BY c.set_code
             """, nativeQuery = true)
     List<CardEntity> findAllPrintingsForCardName(@Param("card_name") String card_name);
+
+    @Query(value = """
+        SELECT *
+        FROM card c
+        WHERE lower(c.name) LIKE lower(CONCAT('%', :namePart, '%'))
+           OR lower(split_part(c.name, ' // ', 1)) LIKE lower(CONCAT('%', :namePart, '%'))
+           OR lower(split_part(c.name, ' // ', 2)) LIKE lower(CONCAT('%', :namePart, '%'))
+           OR lower(c.flavor_name) LIKE lower(CONCAT('%', :namePart, '%'))
+           OR lower(split_part(c.flavor_name, ' // ', 1)) LIKE lower(CONCAT('%', :namePart, '%'))
+           OR lower(split_part(c.flavor_name, ' // ', 2)) LIKE lower(CONCAT('%', :namePart, '%'))
+           OR lower(c.printed_name) LIKE lower(CONCAT('%', :namePart, '%'))
+           OR lower(split_part(c.printed_name, ' // ', 1)) LIKE lower(CONCAT('%', :namePart, '%'))
+           OR lower(split_part(c.printed_name, ' // ', 2)) LIKE lower(CONCAT('%', :namePart, '%'))
+        ORDER BY c.set_code
+        """, nativeQuery = true)
+    List<CardEntity> findAllPrintingsByPartialName(@Param("namePart") String namePart);
 }

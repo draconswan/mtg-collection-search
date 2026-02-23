@@ -3,8 +3,12 @@ package com.dswan.mtg.controller;
 import com.dswan.mtg.domain.cards.Card;
 import com.dswan.mtg.domain.cards.CardEntry;
 import com.dswan.mtg.domain.cards.CardType;
+import com.dswan.mtg.domain.cards.Deck;
+import com.dswan.mtg.domain.model.CardStateForm;
+import com.dswan.mtg.domain.model.DeckStateForm;
 import com.dswan.mtg.dto.CardSetDTO;
 import com.dswan.mtg.service.CardProcessingService;
+import com.dswan.mtg.util.DeckProcessingUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -55,21 +59,27 @@ public class SearchController {
         Tuple<List<CardEntry>, List<String>> cardEntriesAndErrors = cardProcessingService.buildDecklist(cardNamesRaw);
         List<CardEntry> cardEntries = cardEntriesAndErrors._1();
         List<String> cardsNotFound = cardEntriesAndErrors._2();
-        Map<String, List<CardEntry>> groupedDecklist = new LinkedHashMap<>();
         Map<String, Integer> typeQuantities = new LinkedHashMap<>();
-        for (CardEntry entry : cardEntries) {
-            String type = entry.getCard().getCardTypes().getCardType().getLast().toString();
-            groupedDecklist.computeIfAbsent(type, k -> new ArrayList<>()).add(entry);
-            typeQuantities.merge(type, entry.getQuantity(), Integer::sum);
-        }
+        Map<String, List<CardEntry>> orderedGroups = DeckProcessingUtil.getOrderedCardGroups(cardEntries, typeQuantities);
         int totalQuantity = typeQuantities.values().stream()
                 .mapToInt(Integer::intValue)
                 .sum();
-        model.addAttribute("groupedDecklist", groupedDecklist);
+        DeckStateForm form = new DeckStateForm();
+        form.setCards(cardEntries.stream().map(cardEntry -> {
+                            CardStateForm cardStateForm = new CardStateForm();
+                            cardStateForm.setCardId(cardEntry.getCard().getId());
+                            cardStateForm.setQuantity(cardEntry.getQuantity());
+                            cardStateForm.setChecked(false);
+                            return cardStateForm;
+                        })
+                        .toList()
+        );
+        model.addAttribute("groupedDecklist", orderedGroups);
         model.addAttribute("typeQuantities", typeQuantities);
         model.addAttribute("totalQuantity", totalQuantity);
         model.addAttribute("pageTitle", "Decklist");
         model.addAttribute("cardsNotFound", cardsNotFound);
+        model.addAttribute("deckStateForm", form);
         return "decks/decklist";
     }
 }

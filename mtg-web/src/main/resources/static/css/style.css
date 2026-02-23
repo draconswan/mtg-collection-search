@@ -1,7 +1,18 @@
+.page-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+
+    z-index: 1050; /* above everything else */
+}
+
+body {
+    padding-top: 70px;
+}
 /* ---------------------------------------------
    GRID & COLUMN LAYOUT
 --------------------------------------------- */
-
 #checklist-grid {
     display: flex;
     flex-wrap: wrap;
@@ -20,7 +31,6 @@
 /* ---------------------------------------------
    SET TITLES
 --------------------------------------------- */
-
 .set-title {
     min-height: 3em;
     display: flex;
@@ -32,7 +42,6 @@
 /* ---------------------------------------------
    TABLE COLUMN WIDTHS
 --------------------------------------------- */
-
 .checkbox-col {
     width: 25px;
     min-width: 25px;
@@ -70,7 +79,6 @@
 /* ---------------------------------------------
    MAGIC-THEMED BACKGROUND & CARD STYLES
 --------------------------------------------- */
-
 body {
     background: url('https://www.transparenttextures.com/patterns/paper-fibers.png') repeat;
     font-family: 'Garamond', 'Georgia', serif;
@@ -175,7 +183,6 @@ body {
 /* ---------------------------------------------
    CARD PREVIEW TOOLTIP
 --------------------------------------------- */
-
 #card-preview {
     position: fixed;
     pointer-events: none;
@@ -196,7 +203,6 @@ body {
     display: block;
     border-radius: 6px;
 }
-
 /* ---------------------------------------------
    RARITY BADGES
 --------------------------------------------- */
@@ -230,7 +236,6 @@ body {
 /* ---------------------------------------------
    COLLAPSIBLE SETS
 --------------------------------------------- */
-
 table.collapsed tbody {
     display: none;
 }
@@ -241,4 +246,52 @@ table.collapsed tbody {
 
 .toggle-icon {
     transition: transform 0.2s ease;
+}
+
+.card-row {
+    display: flex;
+    align-items: center;
+    padding: 2px 0;
+    gap: 0.5rem;
+}
+
+.card-col-checkbox {
+    width: 28px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.card-col-name {
+    flex: 1;
+    min-width: 0;
+}
+
+.card-col-qty {
+    width: 70px;
+    flex-shrink: 0;
+}
+
+.card-col-delete {
+    width: 40px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.deck-columns {
+    column-count: 2;
+    column-gap: 2rem;
+}
+
+.deck-group {
+    break-inside: avoid;
+    margin-bottom: 1.5rem;
+}
+
+/* Mobile fallback */
+@media (max-width: 768px) {
+    .deck-columns {
+        column-count: 1;
+    }
 }

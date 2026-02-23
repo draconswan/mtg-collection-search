@@ -20,66 +20,7 @@
             integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
             crossorigin="anonymous"></script>
     <script src="/js/mana-symbols.js" defer></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            document.querySelectorAll(".delete-card-btn").forEach(btn => {
-                btn.addEventListener("click", async () => {
-                    const cardId = btn.dataset.cardId;
-                    const deckId = btn.dataset.deckId;
-
-                    const response = await fetch(`/api/v1/decks/${deckId}/remove-card`, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded"
-                        },
-                        body: `cardId=${encodeURIComponent(cardId)}`
-                    });
-
-                    if (response.ok) {
-                        btn.closest(".form-check").remove();
-                    } else {
-                        alert("Failed to delete card.");
-                    }
-                });
-            });
-        });
-        function exportUncheckedCards() {
-            const includeX = document.getElementById('includeX').checked;
-            const unchecked = Array.from(
-                document.querySelectorAll('#saveDeckForm .form-check-input')
-            )
-            .filter(input => !input.checked)
-            .map(input => {
-                const label = input.nextElementSibling;
-                const qty = label.dataset.quantity;
-                const name = label.dataset.name;
-                return includeX ? `${qty}x ${name}` : `${qty} ${name}`;
-            });
-            const outputArea = document.getElementById('outputArea');
-            outputArea.value = unchecked.length > 0
-                ? unchecked.join('\n')
-                : "All cards are checked!";
-
-            outputArea.select();
-        }
-
-        function clearUncheckedCards() {
-            document.getElementById('outputArea').value = "";
-        }
-
-        function sendUncheckedCards() {
-            const outputArea = document.getElementById('outputArea');
-            const payload = outputArea.value.trim();
-
-            if (!payload) {
-                alert("There are no unchecked cards to send.");
-                return;
-            }
-
-            document.getElementById('cardNames').value = payload;
-            document.getElementById('sendForm').submit();
-        }
-    </script>
+    <script src="/js/deck.js"></script>
 </head>
 <body>
 <!-- Include header -->
@@ -96,35 +37,120 @@
         </div>
     </div>
     <h1 class="mb-4">Deck Checklist</h1>
-    <h6 class="text-muted" th:text="'Total cards: ' + ${totalQuantity}"></h6>
+    <div class="row">
+        <h5>Add Card to Deck</h5>
+        <div class="position-relative col-sm-10">
+            <input type="text"
+                   id="cardSearch"
+                   class="form-control"
+                   placeholder="Search card name…"
+                   autocomplete="off">
+            <div id="cardSearchResults"
+                 class="list-group position-absolute w-100 shadow-sm"
+                 style="z-index: 1000; display: none;">
+            </div>
+        </div>
+        <div class="col-sm-2">
+            <button id="addSelectedCardBtn" class="btn btn-success" type="button">
+                Add Selected Card
+            </button>
+        </div>
+        <div id="addCardMessage" class="text-success small mt-1"></div>
+    </div>
     <div class="row">
         <!-- Left Column: Checklist -->
-        <div class="col-md-6">
-            <form id="saveDeckForm" th:action="@{/user/deck/save-deck-state}" method="post">
+        <div class="col-12">
+            <form id="saveDeckForm"
+                  th:object="${deckStateForm}"
+                  th:action="@{/user/deck/save-deck-state}"
+                  method="post">
                 <input type="hidden" name="deckId" th:value="${deckId}"/>
-                <div class="row g-1">
-                    <div th:each="entryGroup : ${groupedDecklist}">
-                        <h5 class="mt-4 mb-2"
-                            th:text="${entryGroup.key + ' (' + typeQuantities[entryGroup.key] + ')'}"></h5>
-                        <div th:each="cardEntry : ${entryGroup.value}" class="form-check">
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   th:id="'card_' + ${cardEntry.index}"
-                                   th:name="cards[__${cardEntry.index}__].checked"
-                                   th:checked="${cardEntry.card.checked}"/>
-                            <label class="form-check-label"
-                                   th:for="'card_' + ${cardEntry.index}"
-                                   th:data-quantity="${cardEntry.quantity}"
-                                   th:data-name="${cardEntry.card.displayName}"
-                                   th:data-card-id="${cardEntry.card.id}"
-                                   th:text="${cardEntry.quantity + ' ' + cardEntry.card.displayName}">
-                            </label>
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-danger ms-2 delete-card-btn"
-                                    th:data-card-id="${cardEntry.card.id}"
-                                    th:data-deck-id="${deckId}">
-                                <i class="bi bi-x-lg"></i>
-                            </button>
+                <div class="row mb-3">
+                    <div class="col-lg-3 col-sm-6">
+                        <label for="deckName" class="form-label">Deck Name</label>
+                        <input type="text"
+                               id="deckName"
+                               name="deckName"
+                               class="form-control"
+                               th:value="${deckName}">
+                    </div>
+                    <div class="col-lg-3 col-sm-6">
+                        <label for="deckFormat" class="form-label">Format</label>
+                        <select id="deckFormat"
+                                name="deckFormat"
+                                class="form-select"
+                                th:field="*{deckFormat}">
+                            <option value="">Select Format</option>
+                            <optgroup label="Paper Formats">
+                                <option value="Standard">Standard</option>
+                                <option value="Pioneer">Pioneer</option>
+                                <option value="Modern">Modern</option>
+                                <option value="Legacy">Legacy</option>
+                                <option value="Vintage">Vintage</option>
+                                <option value="Commander">Commander</option>
+                                <option value="Oathbreaker">Oathbreaker</option>
+                                <option value="Pauper">Pauper</option>
+                                <option value="Premodern">Premodern</option>
+                            </optgroup>
+                            <optgroup label="Digital Formats">
+                                <option value="Historic">Historic</option>
+                                <option value="Timeless">Timeless</option>
+                                <option value="Alchemy">Alchemy</option>
+                            </optgroup>
+                            <optgroup label="Casual / Special">
+                                <option value="Brawl">Brawl</option>
+                                <option value="Gladiator">Gladiator</option>
+                                <option value="Pauper Commander">Pauper Commander</option>
+                                <option value="Duel">Duel Commander</option>
+                                <option value="Penny">Penny Dreadful</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+                <div class="deck-columns">
+                    <div th:each="entryGroup : ${groupedDecklist}" class="deck-group">
+                        <h5>
+                            <span th:text="${entryGroup.key}"></span>
+                            (<span class="type-total"
+                                   th:id="'typeTotal_' + ${entryGroup.key}"
+                                   th:text="${typeQuantities[entryGroup.key]}"></span>)
+                        </h5>
+                        <div th:each="cardEntry : ${entryGroup.value}" class="card-row" th:data-type="${entryGroup.key}" th:data-index="${cardEntry.index}">
+                            <div class="card-col-checkbox">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       th:id="'card_' + ${cardEntry.index}"
+                                       th:name="cards[__${cardEntry.index}__].checked"
+                                       th:checked="${cardEntry.card.checked}"/>
+                            </div>
+                            <div class="card-col-qty">
+                                <input type="number"
+                                       class="form-control form-control-sm quantity-input"
+                                       th:data-index="${cardEntry.index}"
+                                       th:id="'qty_' + ${cardEntry.index}"
+                                       th:data-card-id="${cardEntry.card.id}"
+                                       th:data-deck-id="${deckId}"
+                                       th:data-type="${entryGroup.key}"
+                                       min="1"
+                                       th:value="${cardEntry.quantity}"/>
+                            </div>
+                            <div class="card-col-name">
+                                <label class="form-check-label"
+                                       th:for="'card_' + ${cardEntry.index}"
+                                       th:data-quantity="${cardEntry.quantity}"
+                                       th:data-name="${cardEntry.card.displayName}"
+                                       th:data-card-id="${cardEntry.card.id}"
+                                       th:text="${cardEntry.card.displayName}">
+                                </label>
+                            </div>
+                            <div class="card-col-delete">
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger delete-card-btn"
+                                        th:data-card-id="${cardEntry.card.id}"
+                                        th:data-deck-id="${deckId}">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
                             <input type="hidden"
                                    th:name="cards[__${cardEntry.index}__].cardId"
                                    th:value="${cardEntry.card.id}"/>
@@ -136,29 +162,32 @@
                 </div>
             </form>
         </div>
-
-        <!-- Right Column: Output Text Area -->
-        <div class="col-md-6">
-            <div class="form-check">
-                <input class="form-check-input d-not-include" type="checkbox" id="includeX"/>
-                <label class="form-check-label" for="includeX">Include "x" in quantity</label>
+    </div>
+</div>
+<footer class="fixed-bottom bg-light border-top py-2">
+    <div class="container d-flex justify-content-between align-items-center">
+        <button type="submit" form="saveDeckForm" class="btn btn-success">
+            Save Deck
+        </button>
+        <h6 class="text-muted" id="totalQuantity" th:text="'Total cards: ' + ${totalQuantity}"></h6>
+        <button id="sendUncheckedBtn" type="button" class="btn btn-outline-primary">
+            Send Unchecked Cards to Checklist
+        </button>
+        <button id="copyUncheckedBtn" type="button" class="btn btn-outline-primary">
+            Copy Unchecked Cards
+        </button>
+        <form id="sendForm" th:action="@{/search/checklist}" method="post">
+            <input type="hidden" id="cardNames" name="cardNames"/>
+        </form>
+    </div>
+</footer>
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="copyToast" class="toast text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                Unchecked cards copied to clipboard.
             </div>
-            <button type="submit" form="saveDeckForm" class="btn btn-success mt-2">
-                Save Deck
-            </button>
-            <button type="button" class="btn btn-outline-primary" onclick="exportUncheckedCards()">Export Unchecked
-                Cards
-            </button>
-            <button type="button" class="btn btn-outline-primary" onclick="clearUncheckedCards()">Clear</button>
-            <textarea id="outputArea" class="form-control mt-2" rows="20" readonly></textarea>
-            <form id="sendForm" th:action="@{/search/checklist}" method="post">
-                <input type="hidden" id="cardNames" name="cardNames"/>
-                <button type="button"
-                        class="btn btn-outline-success mt-2"
-                        onclick="sendUncheckedCards()">
-                    Send Unchecked Cards to Checklist
-                </button>
-            </form>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>
     </div>
 </div>

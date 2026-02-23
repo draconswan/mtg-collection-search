@@ -21,16 +21,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.dswan.mtg.util.CardProcessingUtil.*;
+import static com.dswan.mtg.util.DeckProcessingUtil.TYPE_ORDER;
 
 @Service
 @Slf4j
 public class CardProcessingService {
-    private static final List<CardType> TYPE_ORDER = List.of(
-            CardType.PLANESWALKER, CardType.CREATURE, CardType.INSTANT, CardType.SORCERY,
-            CardType.ARTIFACT, CardType.ENCHANTMENT, CardType.BATTLE, CardType.LAND
-    );
 
-    private static final List<String> SET_TYPE_FILTER = List.of("memorabilia");
+    public static final List<String> SET_TYPE_FILTER = List.of("memorabilia");
 
     private final CardRepository cardRepository;
 

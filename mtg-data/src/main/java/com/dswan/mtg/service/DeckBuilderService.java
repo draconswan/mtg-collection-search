@@ -32,14 +32,14 @@ public class DeckBuilderService {
                 deck = DeckMapper.toDomain(existingDeck.get());
             } else {
                 deck = new Deck();
-                deck.setName("New Deck");
-                deck.setType("Unknown");
+                deck.setName(deckStateForm.getDeckName());
+                deck.setType(deckStateForm.getDeckFormat());
                 deck.setCreatedAt(ZonedDateTime.now());
             }
         } else {
             deck = new Deck();
-            deck.setName("New Deck");
-            deck.setType("Unknown");
+            deck.setName(deckStateForm.getDeckName());
+            deck.setType(deckStateForm.getDeckFormat());
             deck.setCreatedAt(ZonedDateTime.now());
         }
         deck.setLastUpdated(ZonedDateTime.now());
