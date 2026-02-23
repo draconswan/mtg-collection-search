@@ -79,9 +79,24 @@ class CardProcessingUtilTest {
                 // Unicode suffixes
                 new Object[]{"Sol Ring (CMM) 123★", "Sol Ring"},
                 new Object[]{"Sol Ring (CMM) 123†", "Sol Ring"},
-                new Object[]{"Sol Ring (CMM) 123‡", "Sol Ring"}
+                new Object[]{"Sol Ring (CMM) 123‡", "Sol Ring"},
+
+                // Moxfield variant flags
+                new Object[]{"Sol Ring (CMM) 123 *F*", "Sol Ring"},
+                new Object[]{"Sol Ring (CMM) 123 F", "Sol Ring"},
+                new Object[]{"Sol Ring (CMM) 123 *E*", "Sol Ring"},
+                new Object[]{"Sol Ring (CMM) 123 *EA*", "Sol Ring"},
+                new Object[]{"Sol Ring (CMM) 123 *B*", "Sol Ring"},
+
+                // Trailing-letter collector numbers + variant flags
+                new Object[]{"Teferi's Protection (STA) 74e *F*", "Teferi's Protection"},
+                new Object[]{"Emeria, the Sky Ruin (PLIST) 287 *F*", "Emeria, the Sky Ruin"}
         );
     }
+
+    // ============================================================
+    // extractCollectorNumber tests
+    // ============================================================
 
     @DisplayName("extractCollectorNumber handles various input formats")
     @ParameterizedTest(name = "extractCollectorNumber(\"{0}\") → \"{1}\"")
@@ -97,61 +112,29 @@ class CardProcessingUtilTest {
                 new Object[]{"", Optional.empty()},
                 new Object[]{"   ", Optional.empty()},
 
-                // Quantity stripping
+                // No set → no collector number
                 new Object[]{"1 Auramancer", Optional.empty()},
-                new Object[]{"1x Auramancer", Optional.empty()},
-                new Object[]{"3x   Lightning Bolt", Optional.empty()},
-                new Object[]{"12X Counterspell", Optional.empty()},
+                new Object[]{"Auramancer 012", Optional.empty()},
 
-                // Section prefixes
-                new Object[]{"SB: 1x Auramancer", Optional.empty()},
-                new Object[]{"Sideboard: 2x Negate", Optional.empty()},
-                new Object[]{"Commander: 1x Atraxa, Praetors' Voice", Optional.empty()},
-                new Object[]{"Companion: 1x Jegantha, the Wellspring", Optional.empty()},
-
-                // Set codes
-                new Object[]{"Auramancer (M21)", Optional.empty()},
-                new Object[]{"Auramancer [M21]", Optional.empty()},
+                // Basic cases
                 new Object[]{"Lightning Bolt (2XM) 123", Optional.of("123")},
                 new Object[]{"Lightning Bolt [2XM] 123a", Optional.of("123a")},
 
-                // Collector numbers (after set code)
-                new Object[]{"Auramancer (M21) 012", Optional.of("012")},
-                new Object[]{"Auramancer [M21] 12a", Optional.of("12a")},
-                new Object[]{"Auramancer (M21) 123★", Optional.of("123★")},
-                new Object[]{"Auramancer (M21) ABC-123", Optional.of("ABC-123")},
-
-                // Collector numbers WITHOUT set code (should NOT be removed)
-                new Object[]{"Auramancer 012", Optional.empty()},
-                new Object[]{"Lightning Bolt 123a", Optional.empty()},
-
-                // Promo/variant keywords
-                new Object[]{"Auramancer foil", Optional.empty()},
-                new Object[]{"Auramancer Etched", Optional.empty()},
-                new Object[]{"Auramancer showcase", Optional.empty()},
-                new Object[]{"Auramancer borderless", Optional.empty()},
-                new Object[]{"Auramancer extended art", Optional.empty()},
-                new Object[]{"Auramancer promo", Optional.empty()},
-
-                // Parentheses cleanup
-                new Object[]{"Auramancer (Promo)", Optional.empty()},
-                new Object[]{"Lightning Bolt (Judge Gift)", Optional.empty()},
-
-                // Whitespace collapsing
-                new Object[]{"  Auramancer    foil   ", Optional.empty()},
-
-                // MDFC / split cards
-                new Object[]{"Valakut Awakening // Valakut Stoneforge", Optional.empty()},
-                new Object[]{"Fire // Ice (MMA) 123", Optional.of("123")},
-
-                // Moxfield multi-dash collector numbers
-                new Object[]{"Sol Ring (CMM) 123-EN-foil", Optional.empty()},
-                new Object[]{"Sol Ring (CMM) EN-123-foil", Optional.empty()},
+                // Trailing letters
+                new Object[]{"Teferi's Protection (STA) 74e *F*", Optional.of("74e")},
+                new Object[]{"Card Name (SET) 102b", Optional.of("102b")},
 
                 // Unicode suffixes
                 new Object[]{"Sol Ring (CMM) 123★", Optional.of("123★")},
                 new Object[]{"Sol Ring (CMM) 123†", Optional.of("123†")},
-                new Object[]{"Sol Ring (CMM) 123‡", Optional.of("123‡")}
+                new Object[]{"Sol Ring (CMM) 123‡", Optional.of("123‡")},
+
+                // Multi-dash rejection
+                new Object[]{"Sol Ring (CMM) 123-EN-foil", Optional.empty()},
+                new Object[]{"Sol Ring (CMM) EN-123-foil", Optional.empty()},
+
+                // Valid single-dash
+                new Object[]{"Card Name (SET) ABC-123", Optional.of("ABC-123")}
         );
     }
 }

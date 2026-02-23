@@ -4,7 +4,9 @@ import java.text.Normalizer;
 
 public class CardNameNormalizer {
     public static String normalizeCardName(String input) {
-        if (input == null) return null;
+        if (input == null) {
+            return null;
+        }
 
         // Normalize Unicode accents (e.g., é → e)
         String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);

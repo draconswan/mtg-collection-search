@@ -6,6 +6,7 @@ public record ParsedCardLine(
         int quantity,
         String name,
         Optional<String> set,
-        Optional<String> collectorNumber
+        Optional<String> collectorNumber,
+        String rawInput
 ) {
 }

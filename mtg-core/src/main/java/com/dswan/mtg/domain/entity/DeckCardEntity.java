@@ -26,4 +26,7 @@ public class DeckCardEntity {
 
     @Column(nullable = false)
     private Boolean checked = false;
+
+    @Column(nullable = false)
+    private String location;
 }

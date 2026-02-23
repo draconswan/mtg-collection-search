@@ -3,7 +3,6 @@ package com.dswan.mtg.service;
 import com.dswan.mtg.domain.ParsedCardLine;
 import com.dswan.mtg.domain.cards.Card;
 import com.dswan.mtg.domain.cards.CardEntry;
-import com.dswan.mtg.domain.cards.CardType;
 import com.dswan.mtg.domain.entity.CardEntity;
 import com.dswan.mtg.domain.mapper.CardMapper;
 import com.dswan.mtg.dto.CardSetDTO;
@@ -70,7 +69,7 @@ public class CardProcessingService {
                     String cleaned = cleanName(line);
 
                     if (!cleaned.isEmpty()) {
-                        results.add(new ParsedCardLine(quantity, cleaned, set, collector));
+                        results.add(new ParsedCardLine(quantity, cleaned, set, collector, line));
                     }
                 });
 
@@ -131,7 +130,7 @@ public class CardProcessingService {
             List<Card> matches = findAllPrintings(normalized);
             if (matches.isEmpty()) {
                 log.warn("Failed to find card: {}, normalized: {}", line.name(), normalized);
-                cardsNotFound.add(line.name());
+                cardsNotFound.add(line.rawInput());
                 continue;
             }
             List<Card> filtered = matches.stream()
@@ -143,6 +142,9 @@ public class CardProcessingService {
             Card chosen = chooseBestPrinting(filtered, line);
             if (chosen != null) {
                 entries.add(new CardEntry(idx.getAndIncrement(), line.quantity(), chosen));
+            } else {
+                log.warn("Failed to find card with name: {} with Set: {} and Collector Number: {}", line.name(), line.set(), line.collectorNumber());
+                cardsNotFound.add(line.rawInput());
             }
         }
 

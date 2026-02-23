@@ -85,6 +85,7 @@ public class DeckService {
                             e -> {
                                 e.setQuantity(card.getQuantity());
                                 e.setChecked(card.isChecked());
+                                e.setLocation(card.getLocation());
                             },
                             () -> {
                                 DeckCardEntity newCard = new DeckCardEntity();
@@ -98,6 +99,7 @@ public class DeckService {
 
                                 newCard.setQuantity(card.getQuantity());
                                 newCard.setChecked(card.isChecked());
+                                newCard.setLocation(card.getLocation());
 
                                 entity.getCards().add(newCard);
                             }
@@ -175,6 +177,7 @@ public class DeckService {
                 deckCardEntity.setQuantity(1);
                 deckCardEntity.setId(deckCardId);
                 deckCardEntity.setChecked(false);
+                deckCardEntity.setLocation("mainboard");
                 deckCardRepository.save(deckCardEntity);
             }
         } catch (Exception ex) {

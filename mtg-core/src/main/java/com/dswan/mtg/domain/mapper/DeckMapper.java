@@ -34,6 +34,7 @@ public class DeckMapper {
                         Card card = CardMapper.toDomain(dc.getCard());
                         card.setQuantity(dc.getQuantity());
                         card.setChecked(dc.getChecked());
+                        card.setLocation(dc.getLocation());
                         return card;
                     })
                     .collect(Collectors.toList());
@@ -80,6 +81,7 @@ public class DeckMapper {
                             e -> {
                                 e.setQuantity(card.getQuantity());
                                 e.setChecked(card.isChecked());
+                                e.setLocation(card.getLocation());
                             },
                             () -> {
                                 DeckCardEntity newCard = new DeckCardEntity();
@@ -93,6 +95,7 @@ public class DeckMapper {
 
                                 newCard.setQuantity(card.getQuantity());
                                 newCard.setChecked(card.isChecked());
+                                newCard.setLocation(card.getLocation());
 
                                 entity.getCards().add(newCard);
                             }

@@ -3,6 +3,7 @@ package com.dswan.mtg.util;
 import io.micrometer.common.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -11,6 +12,11 @@ public class CardProcessingUtil {
             "sideboard", "sb:", "commander", "companion",
             "maybeboard", "maybe:", "tokens", "custom", "categories"
     );
+
+    private static final Map<String, String> SET_CODE_NORMALIZATION = Map.of(
+            "PLIST", "plst"   // Moxfield → Scryfall mismatch
+    );
+
 
     public static boolean notSectionHeader(String line) {
         String lower = line.toLowerCase();
@@ -27,11 +33,17 @@ public class CardProcessingUtil {
     public static Optional<String> extractSet(String line) {
         var matcher = Pattern.compile("[\\[(]([A-Za-z0-9]{2,5})[\\])]")
                 .matcher(line);
-        return matcher.find() ? Optional.of(matcher.group(1)) : Optional.empty();
+        if (!matcher.find()) {
+            return Optional.empty();
+        }
+        String raw = matcher.group(1).toUpperCase(); // Moxfield always uppercase
+        String normalized = SET_CODE_NORMALIZATION.getOrDefault(raw, raw.toLowerCase());
+        return Optional.of(normalized);
     }
 
+
     public static Optional<String> extractCollectorNumber(String line) {
-        if (StringUtils.isEmpty(line)){
+        if (StringUtils.isEmpty(line)) {
             return Optional.empty();
         }
         var setMatcher = Pattern.compile("[\\[(][A-Za-z0-9]{2,5}[\\])]\\s*").matcher(line);
@@ -40,7 +52,7 @@ public class CardProcessingUtil {
         }
         String afterSet = line.substring(setMatcher.end());
         // Capturing group added
-        var pattern = Pattern.compile("^[\\s]*([A-Za-z0-9-]*\\d[A-Za-z0-9-★†‡]*)");
+        var pattern = Pattern.compile("^[\\s]*([A-Za-z0-9-]*\\d+[A-Za-z0-9-★†‡]*)");
         var matcher = pattern.matcher(afterSet);
         if (matcher.find()) {
             String token = matcher.group(1);
@@ -77,7 +89,9 @@ public class CardProcessingUtil {
             afterSet = line.substring(end);
         }
         // Remove collector numbers and suffixes ONLY after a set code
-        afterSet = afterSet.replaceAll("^[\\s]*(?:[A-Za-z0-9-]*\\d[A-Za-z0-9-★†‡]*)", "");
+        afterSet = afterSet.replaceAll("^[\\s]*(?:[A-Za-z0-9-]*\\d+[A-Za-z0-9-★†‡]*)", "");
+        // Remove any Moxfield variant markers (F, *F*, E, *E*, EA, *EA*, etc.) ONLY after the collector number
+        afterSet = afterSet.replaceAll("\\s*\\*?[A-Za-z]{1,3}\\*?\\s*", " ");
         // Reassemble
         line = beforeSet + afterSet;
         // Remove promo/variant keywords
