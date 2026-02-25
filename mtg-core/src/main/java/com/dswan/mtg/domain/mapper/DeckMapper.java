@@ -9,6 +9,7 @@ import com.dswan.mtg.domain.entity.DeckEntity;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class DeckMapper {
@@ -19,7 +20,7 @@ public class DeckMapper {
             return null;
         }
         Deck deck = new Deck();
-        deck.setId(entity.getId());
+        deck.setId(entity.getId().toString());
         deck.setName(entity.getDeckName());
         deck.setType(entity.getDeckType());
         deck.setCreatedAt(entity.getCreatedAt() != null
@@ -70,12 +71,12 @@ public class DeckMapper {
         // Remove cards not in incoming deck
         entity.getCards().removeIf(existing ->
                 domain.getCards().stream()
-                        .noneMatch(c -> c.getId().equals(existing.getCard().getId()))
+                        .noneMatch(c -> c.getId().equals(existing.getCard().getId().toString()))
         );
         // Add or update incoming cards
         for (Card card : domain.getCards()) {
             entity.getCards().stream()
-                    .filter(e -> e.getCard().getId().equals(card.getId()))
+                    .filter(e -> e.getCard().getId().equals(UUID.fromString(card.getId())))
                     .findFirst()
                     .ifPresentOrElse(
                             e -> {
@@ -90,7 +91,7 @@ public class DeckMapper {
 
                                 DeckCardId id = new DeckCardId();
                                 id.setDeckId(entity.getId());
-                                id.setCardId(card.getId());
+                                id.setCardId(UUID.fromString(card.getId()));
                                 newCard.setId(id);
 
                                 newCard.setQuantity(card.getQuantity());

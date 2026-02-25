@@ -11,6 +11,7 @@ import com.dswan.mtg.util.CardColorComparator;
 import com.dswan.mtg.util.CardNameNormalizer;
 import com.dswan.mtg.util.CardProcessingUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.util.Tuple;
 
@@ -173,6 +174,12 @@ public class CardProcessingService {
         if (line.collectorNumber().isPresent()) {
             remaining = remaining.stream()
                     .filter(c -> Objects.equals(c.getCollectorNumber(), line.collectorNumber().get()))
+                    .toList();
+        }
+
+        if (CollectionUtils.size(remaining) > 1) {
+            remaining = remaining.stream()
+                    .filter(c -> c.getLang().equals("en"))
                     .toList();
         }
 

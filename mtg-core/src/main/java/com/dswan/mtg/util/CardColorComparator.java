@@ -7,7 +7,7 @@ import java.util.List;
 public class CardColorComparator implements Comparator<String> {
 
     private static final List<String> COLOR_ORDER = Arrays.asList(
-            "W", "U", "B", "R", "G"
+            "W", "U", "B", "R", "G", "C"
     );
 
     @Override
@@ -18,8 +18,12 @@ public class CardColorComparator implements Comparator<String> {
     }
 
     private int getColorIndex(String color) {
-        if (color == null) return COLOR_ORDER.size() + 1; // Treat null as lowest priority
-        if (color.length() > 1) return COLOR_ORDER.size(); // Multi-color cards come after mono-colored ones
+        if (color == null) {
+            return COLOR_ORDER.size() + 1; // Treat null (colorless) as lowest priority
+        }
+        if (color.length() > 1) {
+            return COLOR_ORDER.size(); // Multi-color cards come after mono-colored ones
+        }
         int index = COLOR_ORDER.indexOf(color);
         return index >= 0 ? index : COLOR_ORDER.size() + 2; // Unknown colors go last
     }

@@ -8,7 +8,6 @@ import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.PropertyNamingStrategies;
-import tools.jackson.databind.PropertyNamingStrategy;
 import tools.jackson.databind.json.JsonMapper;
 import org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect;
 

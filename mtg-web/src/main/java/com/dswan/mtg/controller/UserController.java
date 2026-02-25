@@ -9,6 +9,7 @@ import com.dswan.mtg.domain.cards.CardEntry;
 import com.dswan.mtg.domain.cards.Deck;
 import com.dswan.mtg.service.DeckBuilderService;
 import com.dswan.mtg.service.DeckService;
+import com.dswan.mtg.util.DeckColorComparator;
 import com.dswan.mtg.util.DeckProcessingUtil;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,6 +45,8 @@ public class UserController {
     public String decks(@AuthenticationPrincipal UserDetailsDto details, Model model) {
         User user = details.getUser();
         List<Deck> decks = deckService.getDecksForUser(user.getId());
+        decks.forEach(Deck::calculateDeckColors);
+        decks.sort(new DeckColorComparator());
         model.addAttribute("decks", decks);
         model.addAttribute("pageTitle", "User Decks");
         return "user/decks";
@@ -55,7 +58,7 @@ public class UserController {
     }
 
     @GetMapping("/deck/{deckId}")
-    public String showSavedDeck(@PathVariable Long deckId, Model model) {
+    public String showSavedDeck(@PathVariable String deckId, Model model) {
         Deck deck = deckService.getDeck(deckId);
         AtomicInteger idx = new AtomicInteger();
         List<CardEntry> cardEntries = deck.getCards().stream()
@@ -100,7 +103,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/deck/{deckId}/delete", method = {RequestMethod.GET, RequestMethod.DELETE})
-    public String deleteDeck(@PathVariable Long deckId) {
+    public String deleteDeck(@PathVariable String deckId) {
         deckService.deleteDeck(deckId);
         return "redirect:/user/decks";
     }

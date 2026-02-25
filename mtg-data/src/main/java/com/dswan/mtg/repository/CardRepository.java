@@ -7,9 +7,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface CardRepository extends JpaRepository<CardEntity, String> {
+public interface CardRepository extends JpaRepository<CardEntity, UUID> {
     String CARD_WITH_ID_NOT_FOUND = "Card with id %s not found";
 
     @Query(value = """

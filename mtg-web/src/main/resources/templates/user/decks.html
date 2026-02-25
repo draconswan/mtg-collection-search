@@ -91,6 +91,13 @@
                 </button>
             </div>
         </div>
+        <div class="deck-colors px-2 py-1">
+            <span th:each="color : ${deck.deckColors}"
+                  th:attr="data-mana=${color}"
+                  class="mana-symbol me-1"
+                  th:text="${color}">
+            </span>
+        </div>
         <div class="collapse" th:id="'deckCollapse__' + ${deck.id}">
             <table class="table table-striped deck-table mt-3">
                 <thead>

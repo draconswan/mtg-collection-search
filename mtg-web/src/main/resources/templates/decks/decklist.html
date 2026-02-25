@@ -37,7 +37,7 @@
         </div>
     </div>
     <h1 class="mb-4">Deck Checklist</h1>
-    <div class="row">
+    <div class="row" th:if="${deckId}">
         <h5>Add Card to Deck</h5>
         <div class="position-relative col-sm-10">
             <input type="text"

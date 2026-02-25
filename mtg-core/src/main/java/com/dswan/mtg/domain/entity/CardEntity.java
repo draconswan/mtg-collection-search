@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Entity
 @Table(name = "card", schema = "public")
@@ -11,8 +12,8 @@ import java.time.LocalDate;
 public class CardEntity {
 
     @Id
-    @Column(name = "id", nullable = false)
-    private String id;
+    @Column(columnDefinition = "UUID")
+    private UUID id;
 
     @Column(name = "oracle_id")
     private String oracleId;

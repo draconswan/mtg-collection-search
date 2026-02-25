@@ -14,7 +14,8 @@ public class CardProcessingUtil {
     );
 
     private static final Map<String, String> SET_CODE_NORMALIZATION = Map.of(
-            "PLIST", "plst"   // Moxfield → Scryfall mismatch
+            "PLIST", "plst",
+            "PHED", "slx"
     );
 
 

@@ -1,3 +1,11 @@
+mtg:
+  ingest:
+    languages:
+      - en
+      - ja
+      - ph
+  api:
+    refreshEndpoint: http://localhost:8080/api/v1/refresh
 spring:
   application:
     name: MTG Collection Search
@@ -27,8 +35,3 @@ spring:
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
-mtg:
-  ingest:
-    language: en
-  api:
-    refreshEndpoint: http://localhost:8080/api/v1/refresh

@@ -3,6 +3,8 @@ package com.dswan.mtg.domain.mapper;
 import com.dswan.mtg.domain.cards.Card;
 import com.dswan.mtg.domain.entity.CardEntity;
 
+import java.util.UUID;
+
 public class CardMapper {
 
     public static Card toDomain(CardEntity e) {
@@ -10,7 +12,7 @@ public class CardMapper {
             return null;
         }
         Card c = new Card();
-        c.setId(e.getId());
+        c.setId(e.getId().toString());
         c.setOracleId(e.getOracleId());
         c.setName(e.getName());
         c.setFlavorName(e.getFlavorName());
@@ -39,7 +41,7 @@ public class CardMapper {
         }
         c.populateFromJSON();
         CardEntity e = new CardEntity();
-        e.setId(c.getId());
+        e.setId(UUID.fromString(c.getId()));
         e.setOracleId(c.getOracleId());
         e.setName(c.getName());
         e.setFlavorName(c.getFlavorName());

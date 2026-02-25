@@ -13,6 +13,7 @@ import org.yaml.snakeyaml.util.Tuple;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -49,7 +50,9 @@ class CardProcessingServiceTest {
     }
 
     private CardEntity entity() {
-        return new CardEntity();
+        CardEntity cardEntity = new CardEntity();
+        cardEntity.setId(UUID.randomUUID());
+        return cardEntity;
     }
 
     // ------------------------------------------------------------
@@ -231,6 +234,7 @@ class CardProcessingServiceTest {
 
         // Repository returns ENTITIES
         CardEntity solEntity = new CardEntity();
+        solEntity.setId(UUID.randomUUID());
         solEntity.setName("Sol Ring");
         solEntity.setSetName("Commander Masters");
         solEntity.setSetType("masters");
@@ -239,6 +243,7 @@ class CardProcessingServiceTest {
         solEntity.setTypeLine("Artifact");
 
         CardEntity boltEntity = new CardEntity();
+        boltEntity.setId(UUID.randomUUID());
         boltEntity.setName("Lightning Bolt");
         boltEntity.setSetName("Magic 2010");
         boltEntity.setSetType("core");

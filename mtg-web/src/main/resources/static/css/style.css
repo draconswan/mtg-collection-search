@@ -295,3 +295,12 @@ table.collapsed tbody {
         column-count: 1;
     }
 }
+
+.deck-colors {
+    background-color: #fafafa;
+    border-bottom: 1px solid #e2e2e2;
+    font-size: 1.2rem;
+}
+.mana-symbol {
+    font-family: 'Mana', sans-serif;
+}

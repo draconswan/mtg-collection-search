@@ -4,11 +4,11 @@ import java.text.Normalizer;
 
 public class CardNameNormalizer {
     public static String normalizeCardName(String input) {
-        if (input == null) return null;
+        if (input == null) {
+            return null;
+        }
 
-        // Normalize Unicode accents (e.g., é → e)
-        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
-        normalized = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+        String normalized = input;
 
         // Replace curly quotes/apostrophes with straight ones
         normalized = normalized.replace("’", "'")
@@ -27,6 +27,8 @@ public class CardNameNormalizer {
         normalized = normalized.replace("™", "")
                 .replace("©", "")
                 .replace("®", "");
+
+        normalized = normalized.replace(" / ", " // ");
 
         // Trim and lowercase
         return normalized.trim().toLowerCase();

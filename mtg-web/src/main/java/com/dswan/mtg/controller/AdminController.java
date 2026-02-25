@@ -1,5 +1,6 @@
 package com.dswan.mtg.controller;
 
+import com.dswan.mtg.config.MTGProperties;
 import com.dswan.mtg.domain.entity.UserRole;
 import com.dswan.mtg.repository.UserRepository;
 import com.dswan.mtg.service.CustomUserDetailsService;
@@ -18,16 +19,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequiredArgsConstructor
 public class AdminController {
 
-    @Value("${mtg.api.refreshEndpoint}")
-    private String apiRefreshEndpoint;
-
     private final UserRepository userRepository;
     private final CustomUserDetailsService userDetailsService;
+    private final MTGProperties mtgProperties;
 
     @GetMapping("/users")
     public String userList(Model model) {
         model.addAttribute("users", userRepository.findAll());
-        model.addAttribute("apiRefreshEndpoint", apiRefreshEndpoint);
+        model.addAttribute("apiRefreshEndpoint", mtgProperties.api().refreshEndpoint());
         return "admin/admin-panel";
     }
 

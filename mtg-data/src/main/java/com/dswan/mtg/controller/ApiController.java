@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ApiController {
     private final DatabasePopulationService databasePopulationService;
-    private final DeckService deckService;
 
     @GetMapping("/refresh")
     public ResponseEntity<UpdateResult> refreshDatabase(@RequestParam(defaultValue = "false") boolean force) {

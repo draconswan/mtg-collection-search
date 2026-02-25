@@ -1,0 +1,6 @@
+ALTER TABLE card
+    DROP COLUMN id;
+ALTER TABLE card
+    RENAME COLUMN id_new TO id;
+ALTER TABLE card
+    ADD PRIMARY KEY (id);

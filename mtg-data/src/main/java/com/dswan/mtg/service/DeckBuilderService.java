@@ -16,6 +16,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -27,9 +28,15 @@ public class DeckBuilderService {
     public Deck buildDeck(DeckStateForm deckStateForm) {
         Deck deck;
         if (deckStateForm.getDeckId() != null) {
-            Optional<DeckEntity> existingDeck = deckRepository.findById(deckStateForm.getDeckId());
+            UUID deckId = isValidUUID(deckStateForm.getDeckId())
+                    ? UUID.fromString(deckStateForm.getDeckId())
+                    : UUID.randomUUID();
+            deckStateForm.setDeckId(deckId.toString());
+            Optional<DeckEntity> existingDeck = deckRepository.findById(UUID.fromString(deckStateForm.getDeckId()));
             if (existingDeck.isPresent()) {
                 deck = DeckMapper.toDomain(existingDeck.get());
+                deck.setName(deckStateForm.getDeckName());
+                deck.setType(deckStateForm.getDeckFormat());
             } else {
                 deck = new Deck();
                 deck.setName(deckStateForm.getDeckName());
@@ -45,7 +52,7 @@ public class DeckBuilderService {
         deck.setLastUpdated(ZonedDateTime.now());
         List<Card> cards = new ArrayList<>();
         for (CardStateForm cs : deckStateForm.getCards()) {
-            Card card = cardRepository.findById(cs.getCardId())
+            Card card = cardRepository.findById(UUID.fromString(cs.getCardId()))
                     .map(CardMapper::toDomain)
                     .orElseThrow(() -> new RuntimeException("Card not found: " + cs.getCardId()));
             card.setChecked(cs.isChecked());
@@ -54,5 +61,17 @@ public class DeckBuilderService {
         }
         deck.setCards(cards);
         return deck;
+    }
+
+    private boolean isValidUUID(String value) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        try {
+            UUID.fromString(value);
+            return true;
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
     }
 }

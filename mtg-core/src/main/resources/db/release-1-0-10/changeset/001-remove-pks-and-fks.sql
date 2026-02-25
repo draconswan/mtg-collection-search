@@ -1,0 +1,10 @@
+ALTER TABLE user_deck_cards
+    DROP CONSTRAINT user_deck_cards_user_decks_fk;
+ALTER TABLE user_deck_cards
+    DROP CONSTRAINT user_deck_cards_card_fk;
+ALTER TABLE user_deck_cards
+    DROP CONSTRAINT user_deck_cards_pk;
+ALTER TABLE user_decks
+    DROP CONSTRAINT user_decks_pk;
+ALTER TABLE card
+    DROP CONSTRAINT card_pkey;

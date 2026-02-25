@@ -31,41 +31,41 @@ public class DeckController {
     }
 
     @GetMapping("/{deckId}")
-    public ResponseEntity<Deck> getDeck(@PathVariable Long id) {
-        Deck deck = deckService.getDeck(id);
+    public ResponseEntity<Deck> getDeck(@PathVariable String deckId) {
+        Deck deck = deckService.getDeck(deckId);
         return ResponseEntity.ok(deck);
     }
 
     @DeleteMapping("/{deckId}")
-    public ResponseEntity<Void> deleteDeck(@PathVariable Long id) {
-        deckService.deleteDeck(id);
+    public ResponseEntity<Void> deleteDeck(@PathVariable String deckId) {
+        deckService.deleteDeck(deckId);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{deckId}/remove-card")
     @ResponseBody
-    public ResponseEntity<Boolean> removeCard(@PathVariable Long deckId, @RequestParam String cardId) {
+    public ResponseEntity<Boolean> removeCard(@PathVariable String deckId, @RequestParam String cardId) {
         Boolean success = deckService.removeCardFromDeck(deckId, cardId);
         return ResponseEntity.ok(success);
     }
 
     @PostMapping("/{deckId}/add-card")
     @ResponseBody
-    public ResponseEntity<Boolean> addCard(@PathVariable Long deckId, @RequestParam String cardId) {
+    public ResponseEntity<Boolean> addCard(@PathVariable String deckId, @RequestParam String cardId) {
         Boolean success = deckService.addCardToDeck(deckId, cardId);
         return ResponseEntity.ok(success);
     }
 
     @PostMapping("/{deckId}/update-quantity")
     @ResponseBody
-    public ResponseEntity<Boolean> updateCardQuantity(@PathVariable Long deckId, @RequestParam String cardId, @RequestParam Integer quantity) {
+    public ResponseEntity<Boolean> updateCardQuantity(@PathVariable String deckId, @RequestParam String cardId, @RequestParam Integer quantity) {
         Boolean success = deckService.updateDeckCardQuantity(deckId, cardId, quantity);
         return ResponseEntity.ok(success);
     }
 
     @PostMapping("/{deckId}/update-checked")
     @ResponseBody
-    public ResponseEntity<Boolean> updateCardQuantity(@PathVariable Long deckId, @RequestParam String cardId, @RequestParam Boolean checked) {
+    public ResponseEntity<Boolean> updateCardQuantity(@PathVariable String deckId, @RequestParam String cardId, @RequestParam Boolean checked) {
         Boolean success = deckService.updateDeckCardChecked(deckId, cardId, checked);
         return ResponseEntity.ok(success);
     }

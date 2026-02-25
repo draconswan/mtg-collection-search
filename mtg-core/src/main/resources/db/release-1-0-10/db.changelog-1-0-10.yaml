@@ -1,0 +1,91 @@
+databaseChangeLog:
+  - changeSet:
+      id: 000-enable-uuid
+      author: dswan
+      dbms: postgresql
+      runInTransaction: false
+      comment: Enable pgcrypto for gen_random_uuid()
+      changes:
+        - sqlFile:
+            path: db/release-1-0-10/changeset/000-enable-uuid.sql
+            relativeToChangelogFile: false
+
+  - changeSet:
+      id: 001-remove-pks-and-fks
+      author: dswan
+      dbms: postgresql
+      comment: Remove existing PKs and FKs before migration
+      changes:
+        - sqlFile:
+            path: db/release-1-0-10/changeset/001-remove-pks-and-fks.sql
+            relativeToChangelogFile: false
+
+  - changeSet:
+      id: 002-deck-add-new-id
+      author: dswan
+      dbms: postgresql
+      comment: Add and populate new id column to user_decks
+      changes:
+        - sqlFile:
+            path: db/release-1-0-10/changeset/002-deck-add-new-id.sql
+            relativeToChangelogFile: false
+
+  - changeSet:
+      id: 003-card-add-new-id
+      author: dswan
+      dbms: postgresql
+      comment: Add and populate new id column to card
+      changes:
+        - sqlFile:
+            path: db/release-1-0-10/changeset/003-card-add-new-id.sql
+            relativeToChangelogFile: false
+
+  - changeSet:
+      id: 004-user_deck_card-new-ids
+      author: dswan
+      dbms: postgresql
+      comment: Add and populate new id columns to user_deck_cards
+      changes:
+        - sqlFile:
+            path: db/release-1-0-10/changeset/004-user_deck_card-new-ids.sql
+            relativeToChangelogFile: false
+
+  - changeSet:
+      id: 005-user_deck_card-drop-and-rename-columns
+      author: dswan
+      dbms: postgresql
+      comment: Drop old deck_id/card_id and rename _new columns
+      changes:
+        - sqlFile:
+            path: db/release-1-0-10/changeset/005-user_deck_card-drop-and-rename-columns.sql
+            relativeToChangelogFile: false
+
+  - changeSet:
+      id: 006-deck-drop-and-rename-id
+      author: dswan
+      dbms: postgresql
+      comment: Drop old deck id column and rename _new
+      changes:
+        - sqlFile:
+            path: db/release-1-0-10/changeset/006-deck-drop-and-rename-id.sql
+            relativeToChangelogFile: false
+
+  - changeSet:
+      id: 007-card-drop-and-rename-id
+      author: dswan
+      dbms: postgresql
+      comment: Add card_id_new to user_deck_cards and backfill
+      changes:
+        - sqlFile:
+            path: db/release-1-0-10/changeset/007-card-drop-and-rename-id.sql
+            relativeToChangelogFile: false
+
+  - changeSet:
+      id: 008-user_deck_cards-create-pk-and-fks
+      author: dswan
+      dbms: postgresql
+      comment: Recreate Primary and Foreign keys for user_deck_cards
+      changes:
+        - sqlFile:
+            path: db/release-1-0-10/changeset/008-user_deck_cards-create-pk-and-fks.sql
+            relativeToChangelogFile: false

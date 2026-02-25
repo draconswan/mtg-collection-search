@@ -14,6 +14,10 @@
             <groupId>com.dswan.mtg</groupId>
             <artifactId>mtg-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.dswan.mtg</groupId>
+            <artifactId>mtg-config</artifactId>
+        </dependency>
         <!-- JPA, Hibernate, Liquibase, etc. come from parent -->
     </dependencies>
 </project>

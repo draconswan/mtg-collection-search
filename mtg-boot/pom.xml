@@ -22,6 +22,10 @@
             <groupId>com.dswan.mtg</groupId>
             <artifactId>mtg-web</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.dswan.mtg</groupId>
+            <artifactId>mtg-config</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

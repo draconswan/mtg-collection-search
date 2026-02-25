@@ -1,6 +1,7 @@
 package com.dswan.mtg.service;
 
 import com.dswan.mtg.client.ScryfallBulkDataWebClientService;
+import com.dswan.mtg.config.MTGProperties;
 import com.dswan.mtg.domain.DataVersion;
 import com.dswan.mtg.domain.cards.Card;
 import com.dswan.mtg.domain.entity.CardEntity;
@@ -35,25 +36,25 @@ import java.util.UUID;
 @Service
 @Slf4j
 public class DatabasePopulationService {
-    @Value("${mtg.ingest.languages:en}")
-    private Set<String> allowedLanguages;
-
-    public static final String ALL_CARDS = "All Cards";
+    private static final String ALL_CARDS = "All Cards";
     private static final File BULK_FILE = new File("data/scryfall-all-cards.json");
 
     private final ScryfallBulkDataWebClientService scryfallBulkDataWebClientService;
     private final DataVersionRepository dataVersionRepository;
     private final CardBatchService cardBatchService; // <-- injected batch service
     private final ObjectMapper objectMapper;
+    private final MTGProperties mtgProperties;
 
     public DatabasePopulationService(ScryfallBulkDataWebClientService scryfallBulkDataWebClientService,
                                      DataVersionRepository dataVersionRepository,
                                      CardBatchService cardBatchService,
-                                     @Qualifier("jsonObjectMapper") ObjectMapper objectMapper) {
+                                     @Qualifier("jsonObjectMapper") ObjectMapper objectMapper,
+                                     MTGProperties mtgProperties) {
         this.scryfallBulkDataWebClientService = scryfallBulkDataWebClientService;
         this.dataVersionRepository = dataVersionRepository;
         this.cardBatchService = cardBatchService;
         this.objectMapper = objectMapper;
+        this.mtgProperties = mtgProperties;
     }
 
     public UpdateResult checkAndUpdateDatabase(boolean forceUpdate) {
@@ -116,7 +117,7 @@ public class DatabasePopulationService {
                             while (it.hasNextValue()) {
                                 Card card = it.nextValue();
                                 card.populateFromJSON();
-                                if (!allowedLanguages.contains(String.valueOf(card.getLang()).toLowerCase())) {
+                                if (!mtgProperties.ingest().languages().contains(String.valueOf(card.getLang()).toLowerCase())) {
                                     continue;
                                 }
                                 batch.add(CardMapper.toEntity(card));

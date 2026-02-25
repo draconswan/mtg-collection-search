@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.dswan.mtg.repository.CardRepository.CARD_WITH_ID_NOT_FOUND;
 import static com.dswan.mtg.repository.DeckRepository.DECK_WITH_ID_NOT_FOUND;
@@ -39,7 +40,7 @@ public class DeckService {
             entity.setUser(currentUser());
             deckRepository.save(entity);
         } else {
-            entity = deckRepository.findById(deck.getId())
+            entity = deckRepository.findById(UUID.fromString(deck.getId()))
                     .orElseThrow(() -> new RuntimeException("Deck not found"));
             DeckMapper.updateEntity(entity, deck);
         }
@@ -57,7 +58,7 @@ public class DeckService {
 
     @Transactional
     public Deck updateDeck(Deck deck) {
-        DeckEntity existing = deckRepository.findById(deck.getId())
+        DeckEntity existing = deckRepository.findById(UUID.fromString(deck.getId()))
                 .orElseThrow(() -> new RuntimeException("Deck not found"));
 
         // Update simple fields
@@ -73,13 +74,13 @@ public class DeckService {
         // Remove cards not in incoming deck
         entity.getCards().removeIf(existing ->
                 domain.getCards().stream()
-                        .noneMatch(c -> c.getId().equals(existing.getCard().getId()))
+                        .noneMatch(c -> c.getId().equals(existing.getCard().getId().toString()))
         );
 
         // Add or update incoming cards
         for (Card card : domain.getCards()) {
             entity.getCards().stream()
-                    .filter(e -> e.getCard().getId().equals(card.getId()))
+                    .filter(e -> e.getCard().getId().equals(UUID.fromString(card.getId())))
                     .findFirst()
                     .ifPresentOrElse(
                             e -> {
@@ -94,7 +95,7 @@ public class DeckService {
 
                                 DeckCardId id = new DeckCardId();
                                 id.setDeckId(entity.getId());
-                                id.setCardId(card.getId());
+                                id.setCardId(UUID.fromString(card.getId()));
                                 newCard.setId(id);
 
                                 newCard.setQuantity(card.getQuantity());
@@ -108,10 +109,10 @@ public class DeckService {
     }
 
     @Transactional
-    public Deck getDeck(Long id) {
-        Optional<DeckEntity> entity = deckRepository.findById(id);
+    public Deck getDeck(String deckId) {
+        Optional<DeckEntity> entity = deckRepository.findById(UUID.fromString(deckId));
         if (entity.isEmpty()) {
-            log.warn("Deck with id {} not found", id);
+            log.warn("Deck with id {} not found", deckId);
             return null;
         }
         return DeckMapper.toDomain(entity.get());
@@ -128,24 +129,24 @@ public class DeckService {
     }
 
     @Transactional
-    public void deleteDeck(Long id) {
-        if (!deckRepository.existsById(id)) {
+    public void deleteDeck(String id) {
+        if (!deckRepository.existsById(UUID.fromString(id))) {
             log.warn(String.format(DECK_WITH_ID_NOT_FOUND, id));
             return;
         }
-        deckRepository.deleteById(id);
+        deckRepository.deleteById(UUID.fromString(id));
     }
 
     @Transactional
-    public boolean removeCardFromDeck(Long deckId, String cardId) {
+    public boolean removeCardFromDeck(String deckId, String cardId) {
         try {
-            DeckEntity deck = deckRepository.findById(deckId)
+            DeckEntity deck = deckRepository.findById(UUID.fromString(deckId))
                     .orElseThrow(() -> new RuntimeException(String.format(DECK_WITH_ID_NOT_FOUND, deckId)));
-            cardRepository.findById(cardId)
+            cardRepository.findById(UUID.fromString(cardId))
                     .orElseThrow(() -> new RuntimeException(String.format(CARD_WITH_ID_NOT_FOUND, cardId)));
             DeckCardId deckCardId = new DeckCardId();
-            deckCardId.setDeckId(deckId);
-            deckCardId.setCardId(cardId);
+            deckCardId.setDeckId(UUID.fromString(deckId));
+            deckCardId.setCardId(UUID.fromString(cardId));
             DeckCardEntity deckCardEntity = deckCardRepository.findById(deckCardId).orElse(null);
             if (deckCardEntity == null) {
                 return false;
@@ -160,15 +161,15 @@ public class DeckService {
     }
 
     @Transactional
-    public boolean addCardToDeck(Long deckId, String cardId) {
+    public boolean addCardToDeck(String deckId, String cardId) {
         try {
-            DeckEntity deck = deckRepository.findById(deckId)
+            DeckEntity deck = deckRepository.findById(UUID.fromString(deckId))
                     .orElseThrow(() -> new RuntimeException(String.format(DECK_WITH_ID_NOT_FOUND, deckId)));
-            CardEntity card = cardRepository.findById(cardId)
+            CardEntity card = cardRepository.findById(UUID.fromString(cardId))
                     .orElseThrow(() -> new RuntimeException(String.format(CARD_WITH_ID_NOT_FOUND, cardId)));
             DeckCardId deckCardId = new DeckCardId();
-            deckCardId.setDeckId(deckId);
-            deckCardId.setCardId(cardId);
+            deckCardId.setDeckId(UUID.fromString(deckId));
+            deckCardId.setCardId(UUID.fromString(cardId));
             DeckCardEntity deckCardEntity = deckCardRepository.findById(deckCardId).orElse(null);
             if (deckCardEntity == null) {
                 deckCardEntity = new DeckCardEntity();
@@ -188,17 +189,17 @@ public class DeckService {
     }
 
     @Transactional
-    public boolean updateDeckCardQuantity(Long deckId, String cardId, Integer newQuantity) {
+    public boolean updateDeckCardQuantity(String deckId, String cardId, Integer newQuantity) {
         try {
-            deckRepository.findById(deckId)
+            deckRepository.findById(UUID.fromString(deckId))
                     .orElseThrow(() -> new RuntimeException(String.format(DECK_WITH_ID_NOT_FOUND, deckId)));
-            cardRepository.findById(cardId)
+            cardRepository.findById(UUID.fromString(cardId))
                     .orElseThrow(() -> new RuntimeException(String.format(CARD_WITH_ID_NOT_FOUND, cardId)));
             DeckCardId deckCardId = new DeckCardId();
-            deckCardId.setDeckId(deckId);
-            deckCardId.setCardId(cardId);
+            deckCardId.setDeckId(UUID.fromString(deckId));
+            deckCardId.setCardId(UUID.fromString(cardId));
             DeckCardEntity deckCardEntity = deckCardRepository.findById(deckCardId)
-                    .orElseThrow(() -> new RuntimeException(String.format("Card with id %s not found in deck with id %d", cardId, deckId)));
+                    .orElseThrow(() -> new RuntimeException(String.format("Card with id %s not found in deck with id %s", cardId, deckId)));
             deckCardEntity.setQuantity(newQuantity);
             deckCardRepository.save(deckCardEntity);
         } catch (Exception ex) {
@@ -209,17 +210,17 @@ public class DeckService {
     }
 
     @Transactional
-    public boolean updateDeckCardChecked(Long deckId, String cardId, Boolean checked) {
+    public boolean updateDeckCardChecked(String deckId, String cardId, Boolean checked) {
         try {
-            deckRepository.findById(deckId)
+            deckRepository.findById(UUID.fromString(deckId))
                     .orElseThrow(() -> new RuntimeException(String.format(DECK_WITH_ID_NOT_FOUND, deckId)));
-            cardRepository.findById(cardId)
+            cardRepository.findById(UUID.fromString(cardId))
                     .orElseThrow(() -> new RuntimeException(String.format(CARD_WITH_ID_NOT_FOUND, cardId)));
             DeckCardId deckCardId = new DeckCardId();
-            deckCardId.setDeckId(deckId);
-            deckCardId.setCardId(cardId);
+            deckCardId.setDeckId(UUID.fromString(deckId));
+            deckCardId.setCardId(UUID.fromString(cardId));
             DeckCardEntity deckCardEntity = deckCardRepository.findById(deckCardId)
-                    .orElseThrow(() -> new RuntimeException(String.format("Card with id %s not found in deck with id %d", cardId, deckId)));
+                    .orElseThrow(() -> new RuntimeException(String.format("Card with id %s not found in deck with id %s", cardId, deckId)));
             deckCardEntity.setChecked(checked);
             deckCardRepository.save(deckCardEntity);
         } catch (Exception ex) {

@@ -59,6 +59,9 @@ public class Card {
     private String castingCostAndIdentity;
 
     public String getDisplayName() {
+        if (!lang.equals("en")) {
+            return name;
+        }
         if (StringUtils.isNotBlank(printedName)) {
             return printedName;
         }

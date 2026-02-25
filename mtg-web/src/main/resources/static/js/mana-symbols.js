@@ -42,4 +42,27 @@ function renderManaSymbols() {
     });
 }
 
-document.addEventListener("DOMContentLoaded", renderManaSymbols);
+function renderDeckColorSymbols() {
+    const elements = document.querySelectorAll("[data-mana]");
+
+    elements.forEach(el => {
+        const symbol = el.dataset.mana.toUpperCase().replace(/\//g, "");
+        const url = `https://svgs.scryfall.io/card-symbols/${symbol}.svg`;
+
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = symbol;
+        img.width = 20;
+        img.height = 20;
+        img.style.marginRight = "3px";
+        img.style.verticalAlign = "middle";
+
+        el.textContent = "";
+        el.appendChild(img);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    renderManaSymbols();        // existing table renderer
+    renderDeckColorSymbols();   // new deck-level renderer
+});
