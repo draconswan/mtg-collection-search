@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 000-create-and-populate-land-cycles-view
+      author: dswan
+      dbms: postgresql
+      runInTransaction: false
+      comment: Create View for specific land cycles
+      changes:
+        - sqlFile:
+            path: db/release-1-0-11/changeset/000-create-and-populate-land-cycles-view.sql
+            relativeToChangelogFile: false
