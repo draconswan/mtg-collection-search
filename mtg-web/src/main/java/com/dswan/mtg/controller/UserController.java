@@ -3,6 +3,7 @@ package com.dswan.mtg.controller;
 import com.dswan.mtg.domain.cards.CardType;
 import com.dswan.mtg.domain.entity.User;
 import com.dswan.mtg.domain.entity.UserDetailsDto;
+import com.dswan.mtg.domain.entity.UserLandGroupReportDto;
 import com.dswan.mtg.domain.model.CardStateForm;
 import com.dswan.mtg.domain.model.DeckStateForm;
 import com.dswan.mtg.domain.cards.CardEntry;
@@ -49,7 +50,17 @@ public class UserController {
         decks.sort(new DeckColorComparator());
         model.addAttribute("decks", decks);
         model.addAttribute("pageTitle", "User Decks");
+        model.addAttribute("deckCount", decks.size());
         return "user/decks";
+    }
+
+    @GetMapping("/decks/land-audit")
+    public String landAudit(@AuthenticationPrincipal UserDetailsDto details, Model model) {
+        User user = details.getUser();
+        List<UserLandGroupReportDto> audit = deckService.getLandAuditForUser(user.getId());
+        model.addAttribute("landAudit", audit);
+        model.addAttribute("pageTitle", "User Land Audit Report");
+        return "decks/land-audit";
     }
 
     @GetMapping("/deck/new")

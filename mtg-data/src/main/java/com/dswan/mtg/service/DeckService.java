@@ -1,14 +1,9 @@
 package com.dswan.mtg.service;
 
-import com.dswan.mtg.domain.cards.Card;
 import com.dswan.mtg.domain.cards.Deck;
 import com.dswan.mtg.domain.entity.*;
-import com.dswan.mtg.domain.mapper.CardMapper;
 import com.dswan.mtg.domain.mapper.DeckMapper;
-import com.dswan.mtg.repository.CardRepository;
-import com.dswan.mtg.repository.DeckCardRepository;
-import com.dswan.mtg.repository.DeckRepository;
-import com.dswan.mtg.repository.UserRepository;
+import com.dswan.mtg.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +26,7 @@ public class DeckService {
     private final DeckRepository deckRepository;
     private final DeckCardRepository deckCardRepository;
     private final UserRepository userRepository;
+    private final LandGroupReportRepository landGroupReportRepository;
 
     @Transactional
     public Deck saveDeck(Deck deck) {
@@ -54,58 +50,6 @@ public class DeckService {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
-    }
-
-    @Transactional
-    public Deck updateDeck(Deck deck) {
-        DeckEntity existing = deckRepository.findById(UUID.fromString(deck.getId()))
-                .orElseThrow(() -> new RuntimeException("Deck not found"));
-
-        // Update simple fields
-        existing.setDeckName(deck.getName());
-        existing.setDeckType(deck.getType());
-
-        // Sync cards
-        syncCards(existing, deck);
-        return DeckMapper.toDomain(existing);
-    }
-
-    public static void syncCards(DeckEntity entity, Deck domain) {
-        // Remove cards not in incoming deck
-        entity.getCards().removeIf(existing ->
-                domain.getCards().stream()
-                        .noneMatch(c -> c.getId().equals(existing.getCard().getId().toString()))
-        );
-
-        // Add or update incoming cards
-        for (Card card : domain.getCards()) {
-            entity.getCards().stream()
-                    .filter(e -> e.getCard().getId().equals(UUID.fromString(card.getId())))
-                    .findFirst()
-                    .ifPresentOrElse(
-                            e -> {
-                                e.setQuantity(card.getQuantity());
-                                e.setChecked(card.isChecked());
-                                e.setLocation(card.getLocation());
-                            },
-                            () -> {
-                                DeckCardEntity newCard = new DeckCardEntity();
-                                newCard.setDeckEntity(entity);
-                                newCard.setCard(CardMapper.toEntity(card));
-
-                                DeckCardId id = new DeckCardId();
-                                id.setDeckId(entity.getId());
-                                id.setCardId(UUID.fromString(card.getId()));
-                                newCard.setId(id);
-
-                                newCard.setQuantity(card.getQuantity());
-                                newCard.setChecked(card.isChecked());
-                                newCard.setLocation(card.getLocation());
-
-                                entity.getCards().add(newCard);
-                            }
-                    );
-        }
     }
 
     @Transactional
@@ -228,5 +172,9 @@ public class DeckService {
             return false;
         }
         return true;
+    }
+
+    public List<UserLandGroupReportDto> getLandAuditForUser(Long userId) {
+        return landGroupReportRepository.getUserLandGroupReport(userId);
     }
 }
