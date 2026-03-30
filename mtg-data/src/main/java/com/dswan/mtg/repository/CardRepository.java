@@ -44,4 +44,6 @@ public interface CardRepository extends JpaRepository<CardEntity, UUID> {
         ORDER BY c.set_code
         """, nativeQuery = true)
     List<CardEntity> findAllPrintingsByPartialName(@Param("namePart") String namePart);
+
+    List<CardEntity> findByOracleId(String oracleId);
 }

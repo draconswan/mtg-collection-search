@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 000-create-set-table.sql
+      author: dswan
+      dbms: postgresql
+      runInTransaction: false
+      comment: Add set table
+      changes:
+        - sqlFile:
+            path: db/release-1-0-13/changeset/000-create-set-table.sql
+            relativeToChangelogFile: false

@@ -19,20 +19,44 @@
     <script src="/js/mana-symbols.js" defer></script>
     <style>
         @media print {
-            .no-print { display: none; }
-            .decklist { page-break-after: always; }
+            .no-print {
+                display: none;
+            }
+
+            .decklist {
+                page-break-after: always;
+            }
         }
+
         .deck-header {
             background-color: #f8f9fa;
             padding: 0.5rem;
             border-bottom: 1px solid #dee2e6;
         }
+
         .deck-table th, .deck-table td {
             vertical-align: middle;
+        }
+
+        body {
+            padding-bottom: 60px;
         }
     </style>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // Attach Run Audit handler
+            const runAuditBtn = document.getElementById("runAuditBtn");
+            if (runAuditBtn) {
+                runAuditBtn.addEventListener("click", () => {
+                    const selected = Array.from(document.querySelectorAll("#deckTypeForm input:checked"))
+                        .map(cb => cb.value);
+
+                    const params = new URLSearchParams();
+                    selected.forEach(type => params.append("type", type));
+
+                    window.location.href = "/user/decks/all-missing?" + params.toString();
+                });
+            }
             const modal = new bootstrap.Modal(document.getElementById("deleteDeckModal"));
             const message = document.getElementById("deleteDeckMessage");
             const confirmBtn = document.getElementById("confirmDeleteDeckBtn");
@@ -146,12 +170,57 @@
         </div>
     </div>
 </div>
+<!-- Missing Audit Modal -->
+<div class="modal fade" id="deckTypeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Select Deck Formats</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-2">
+                    Choose which deck formats should be included in the Missing Audit.
+                </p>
+                <form id="deckTypeForm">
+                    <!-- Loop over format groups -->
+                    <div th:each="group : ${deckFormats}">
+                        <h6 class="mt-3" th:text="${group.key}"></h6>
+                        <!-- Loop over formats in each group -->
+                        <div class="form-check ms-2" th:each="fmt : ${group.value}">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   th:id="${fmt}"
+                                   th:value="${fmt}">
+                            <label class="form-check-label"
+                                   th:for="${fmt}"
+                                   th:text="${fmt}"></label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="runAuditBtn">
+                    Run Audit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 <footer class="fixed-bottom bg-light border-top py-2">
     <div class="container d-flex justify-content-between align-items-center">
         <h6 class="text-muted" id="deckCount" th:text="'Number of decks: ' + ${deckCount}"></h6>
-        <a th:href="@{/user/decks/land-audit}" class="btn btn-primary">
-            <i class="bi bi-table"></i> Land Audit
-        </a>
+        <div>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#deckTypeModal">
+                <i class="bi bi-table"></i> Missing Audit
+            </button>
+            <a th:href="@{/user/decks/land-audit}" class="btn btn-primary">
+                <i class="bi bi-table"></i> Land Audit
+            </a>
+        </div>
     </div>
 </footer>
 </body>

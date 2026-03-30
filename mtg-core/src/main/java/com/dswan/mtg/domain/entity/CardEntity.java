@@ -1,5 +1,6 @@
 package com.dswan.mtg.domain.entity;
 
+import io.micrometer.common.util.StringUtils;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -68,4 +69,18 @@ public class CardEntity {
 
     @Column(name = "prices_list")
     private String pricesList;
+
+    @Transient
+    public String getDisplayName() {
+        if (!lang.equals("en")) {
+            return name;
+        }
+        if (StringUtils.isNotBlank(printedName)) {
+            return printedName;
+        }
+        if (StringUtils.isNotBlank(flavorName)) {
+            return flavorName + " (" + name + ")";
+        }
+        return name;
+    }
 }

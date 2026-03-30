@@ -9,6 +9,7 @@ import com.dswan.mtg.domain.entity.DeckEntity;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -68,15 +69,33 @@ public class DeckMapper {
     }
 
     public static void syncCards(DeckEntity entity, Deck domain) {
+        // Combine foil + non-foil entries into a single line
+        Map<String, Card> normalized = domain.getCards().stream()
+                .collect(Collectors.toMap(
+                        Card::getId,
+                        c -> {
+                            Card copy = new Card();
+                            copy.setId(c.getId());
+                            copy.setQuantity(c.getQuantity());
+                            copy.setChecked(c.isChecked());
+                            copy.setLocation(c.getLocation());
+                            return copy;
+                        },
+                        (a, b) -> {
+                            a.setQuantity(a.getQuantity() + b.getQuantity());
+                            return a;
+                        }
+                ));
         // Remove cards not in incoming deck
         entity.getCards().removeIf(existing ->
-                domain.getCards().stream()
+                normalized.values().stream()
                         .noneMatch(c -> c.getId().equals(existing.getCard().getId().toString()))
         );
         // Add or update incoming cards
-        for (Card card : domain.getCards()) {
+        for (Card card : normalized.values()) {
+            UUID cardId = UUID.fromString(card.getId());
             entity.getCards().stream()
-                    .filter(e -> e.getCard().getId().equals(UUID.fromString(card.getId())))
+                    .filter(e -> e.getCard().getId().equals(cardId))
                     .findFirst()
                     .ifPresentOrElse(
                             e -> {
@@ -91,7 +110,7 @@ public class DeckMapper {
 
                                 DeckCardId id = new DeckCardId();
                                 id.setDeckId(entity.getId());
-                                id.setCardId(UUID.fromString(card.getId()));
+                                id.setCardId(cardId);
                                 newCard.setId(id);
 
                                 newCard.setQuantity(card.getQuantity());

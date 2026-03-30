@@ -1,6 +1,5 @@
 package com.dswan.mtg.domain.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.util.List;

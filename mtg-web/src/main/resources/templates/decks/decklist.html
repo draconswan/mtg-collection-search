@@ -21,6 +21,27 @@
             crossorigin="anonymous"></script>
     <script src="/js/mana-symbols.js" defer></script>
     <script src="/js/deck.js"></script>
+    <style>
+        body {
+            padding-bottom: 60px;
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const checkAllBtn = document.getElementById("checkAllBtn");
+            const uncheckAllBtn = document.getElementById("uncheckAllBtn");
+
+            checkAllBtn.addEventListener("click", () => {
+                document.querySelectorAll(".card-row input[type='checkbox']")
+                    .forEach(cb => cb.checked = true);
+            });
+
+            uncheckAllBtn.addEventListener("click", () => {
+                document.querySelectorAll(".card-row input[type='checkbox']")
+                    .forEach(cb => cb.checked = false);
+            });
+        });
+    </script>
 </head>
 <body>
 <!-- Include header -->
@@ -81,31 +102,25 @@
                                 class="form-select"
                                 th:field="*{deckFormat}">
                             <option value="">Select Format</option>
-                            <optgroup label="Paper Formats">
-                                <option value="Standard">Standard</option>
-                                <option value="Pioneer">Pioneer</option>
-                                <option value="Modern">Modern</option>
-                                <option value="Legacy">Legacy</option>
-                                <option value="Vintage">Vintage</option>
-                                <option value="Commander">Commander</option>
-                                <option value="Oathbreaker">Oathbreaker</option>
-                                <option value="Pauper">Pauper</option>
-                                <option value="Premodern">Premodern</option>
-                            </optgroup>
-                            <optgroup label="Digital Formats">
-                                <option value="Historic">Historic</option>
-                                <option value="Timeless">Timeless</option>
-                                <option value="Alchemy">Alchemy</option>
-                            </optgroup>
-                            <optgroup label="Casual / Special">
-                                <option value="Brawl">Brawl</option>
-                                <option value="Gladiator">Gladiator</option>
-                                <option value="Pauper Commander">Pauper Commander</option>
-                                <option value="Duel">Duel Commander</option>
-                                <option value="Penny">Penny Dreadful</option>
+
+                            <!-- Loop through DeckFormats.FORMATS -->
+                            <optgroup th:each="group : ${deckFormats}"
+                                      th:label="${group.key}">
+                                <option th:each="fmt : ${group.value}"
+                                        th:value="${fmt}"
+                                        th:text="${fmt}">
+                                </option>
                             </optgroup>
                         </select>
                     </div>
+                </div>
+                <div class="mb-3">
+                    <button type="button" id="checkAllBtn" class="btn btn-outline-secondary btn-sm me-2">
+                        Check All
+                    </button>
+                    <button type="button" id="uncheckAllBtn" class="btn btn-outline-secondary btn-sm">
+                        Uncheck All
+                    </button>
                 </div>
                 <div class="deck-columns">
                     <div th:each="entryGroup : ${groupedDecklist}" class="deck-group">

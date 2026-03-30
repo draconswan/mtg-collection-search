@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/decks")
@@ -65,7 +66,7 @@ public class DeckController {
 
     @PostMapping("/{deckId}/update-checked")
     @ResponseBody
-    public ResponseEntity<Boolean> updateCardQuantity(@PathVariable String deckId, @RequestParam String cardId, @RequestParam Boolean checked) {
+    public ResponseEntity<Boolean> updateCardQuantity(@PathVariable UUID deckId, @RequestParam UUID cardId, @RequestParam Boolean checked) {
         Boolean success = deckService.updateDeckCardChecked(deckId, cardId, checked);
         return ResponseEntity.ok(success);
     }

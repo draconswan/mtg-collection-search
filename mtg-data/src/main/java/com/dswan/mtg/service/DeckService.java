@@ -154,15 +154,15 @@ public class DeckService {
     }
 
     @Transactional
-    public boolean updateDeckCardChecked(String deckId, String cardId, Boolean checked) {
+    public boolean updateDeckCardChecked(UUID deckId, UUID cardId, Boolean checked) {
         try {
-            deckRepository.findById(UUID.fromString(deckId))
+            deckRepository.findById(deckId)
                     .orElseThrow(() -> new RuntimeException(String.format(DECK_WITH_ID_NOT_FOUND, deckId)));
-            cardRepository.findById(UUID.fromString(cardId))
+            cardRepository.findById(cardId)
                     .orElseThrow(() -> new RuntimeException(String.format(CARD_WITH_ID_NOT_FOUND, cardId)));
             DeckCardId deckCardId = new DeckCardId();
-            deckCardId.setDeckId(UUID.fromString(deckId));
-            deckCardId.setCardId(UUID.fromString(cardId));
+            deckCardId.setDeckId(deckId);
+            deckCardId.setCardId(cardId);
             DeckCardEntity deckCardEntity = deckCardRepository.findById(deckCardId)
                     .orElseThrow(() -> new RuntimeException(String.format("Card with id %s not found in deck with id %s", cardId, deckId)));
             deckCardEntity.setChecked(checked);
