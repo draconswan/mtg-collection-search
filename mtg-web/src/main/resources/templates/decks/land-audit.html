@@ -39,9 +39,11 @@
             <table class="table table-striped table-hover mb-0">
                 <thead class="table-dark">
                 <tr>
-                    <th style="width: 25%">Land Group</th>
-                    <th style="width: 55%">Card Name</th>
-                    <th style="width: 20%">Total Count</th>
+                    <th style="width: 10%">Land Group</th>
+                    <th style="width: 60%">Card Name</th>
+                    <th style="width: 10%">Total Assigned</th>
+                    <th style="width: 10%">Total Owned (+Proxies)</th>
+                    <th style="width: 10%">Total Needed</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -50,6 +52,8 @@
                     <td th:text="${row.landGroup}"></td>
                     <td th:text="${row.cardName}"></td>
                     <td th:text="${row.totalCount}"></td>
+                    <td th:text="${row.checkedCount}"></td>
+                    <td th:text="${row.uncheckedCount}"></td>
                 </tr>
                 </tbody>
             </table>

@@ -1,9 +1,6 @@
 package com.dswan.mtg.controller;
 
-import com.dswan.mtg.domain.cards.Card;
-import com.dswan.mtg.domain.cards.CardEntry;
-import com.dswan.mtg.domain.cards.CardType;
-import com.dswan.mtg.domain.cards.Deck;
+import com.dswan.mtg.domain.cards.*;
 import com.dswan.mtg.domain.model.CardStateForm;
 import com.dswan.mtg.domain.model.DeckStateForm;
 import com.dswan.mtg.dto.CardSetDTO;
@@ -80,6 +77,7 @@ public class SearchController {
         model.addAttribute("pageTitle", "Decklist");
         model.addAttribute("cardsNotFound", cardsNotFound);
         model.addAttribute("deckStateForm", form);
+        model.addAttribute("deckFormats", DeckFormats.FORMATS);
         return "decks/decklist";
     }
 }

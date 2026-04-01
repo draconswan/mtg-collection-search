@@ -12,21 +12,22 @@ import java.util.List;
 @Repository
 public interface LandGroupReportRepository extends JpaRepository<DeckEntity, Long> {
 
-    @Query(
-            value = """
-                    SELECT
-                        lg.name AS cardName,
-                        lg.group_name AS landGroup,
-                        CAST(SUM(udc.quantity) AS BIGINT) AS totalCount
-                    FROM user_decks ud
-                    JOIN user_deck_cards udc
-                        ON ud.id = udc.deck_id
-                    JOIN land_cycles_view lg
-                        ON lg.id = udc.card_id
-                    WHERE ud.user_id = :userId
-                    GROUP BY lg.name, lg.group_name
-                    ORDER BY lg.group_name, lg.name
-                    """,
+    @Query(value = """
+            SELECT
+                lg.name AS cardName,
+                lg.group_name AS landGroup,
+                CAST(SUM(udc.quantity) AS BIGINT) AS totalCount,
+                CAST(SUM(CASE WHEN udc.checked = TRUE THEN udc.quantity ELSE 0 END) AS BIGINT) AS checkedCount,
+                CAST(SUM(CASE WHEN udc.checked IS NOT TRUE THEN udc.quantity ELSE 0 END) AS BIGINT) AS uncheckedCount
+            FROM user_decks ud
+            JOIN user_deck_cards udc
+                ON ud.id = udc.deck_id
+            JOIN land_cycles_view lg
+                ON lg.id = udc.card_id
+            WHERE ud.user_id = :userId
+            GROUP BY lg.name, lg.group_name
+            ORDER BY lg.group_name, lg.name;
+            """,
             nativeQuery = true
     )
     List<UserLandGroupReportDto> getUserLandGroupReport(@Param("userId") Long userId);

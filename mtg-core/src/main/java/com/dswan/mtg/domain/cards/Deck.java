@@ -28,6 +28,26 @@ public class Deck {
         return deckColors;
     }
 
+    public int getCheckedCount() {
+        return cards.stream()
+                .filter(Card::isChecked)
+                .mapToInt(Card::getQuantity)
+                .sum();
+    }
+
+    public int getUncheckedCount() {
+        return cards.stream()
+                .filter(c -> !c.isChecked())
+                .mapToInt(Card::getQuantity)
+                .sum();
+    }
+
+    public int getTotalCards() {
+        return cards.stream()
+                .mapToInt(Card::getQuantity)
+                .sum();
+    }
+
     public void calculateDeckColors() {
         List<String> rawColors = this.cards.stream()
                 .flatMap(card -> {

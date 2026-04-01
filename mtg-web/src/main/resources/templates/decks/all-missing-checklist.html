@@ -28,8 +28,7 @@
     <p class="text-muted">
         This page lists every card across all decks that is not marked as acquired.
     </p>
-    <!-- GLOBAL FORM -->
-    <form action="/decks/update-all" method="post">
+    <form action="/user/decks/update-all" method="post">
         <!-- Loop over sets -->
         <div th:each="entry, setIter : ${groupedBySet}">
             <!-- Collapsible header -->

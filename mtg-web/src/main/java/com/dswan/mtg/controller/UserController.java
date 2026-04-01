@@ -63,8 +63,8 @@ public class UserController {
                                   @RequestParam(required = false) List<String> type,
                                   Model model) {
         Long userId = details.getUser().getId();
-        Map<String, List<UncheckedCardView>> missing = uncheckedCardService.getUncheckedCardsGroupedBySet(userId, type);
-        model.addAttribute("groupedBySet", missing);
+        Map<String, List<UncheckedCardView>> missingGroupedBySet = uncheckedCardService.getUncheckedCardsGroupedBySet(userId, type);
+        model.addAttribute("groupedBySet", missingGroupedBySet);
         return "decks/all-missing-checklist";
     }
 }

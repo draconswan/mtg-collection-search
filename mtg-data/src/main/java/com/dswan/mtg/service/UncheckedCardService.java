@@ -9,6 +9,7 @@ import com.dswan.mtg.dto.UncheckedCardView;
 import com.dswan.mtg.repository.DeckRepository;
 import com.dswan.mtg.repository.MissingCardsRepository;
 import lombok.AllArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -35,9 +36,7 @@ public class UncheckedCardService {
         }
         List<UncheckedCardDTO> rows =
                 missingCardsRepository.findAllUncheckedCardsForUser(userId, types.toArray(new String[0]));
-        // Cache deck colors so we compute them only once per deck
         Map<UUID, List<String>> deckColorsCache = new HashMap<>();
-
         List<UncheckedCardView> wrapped = rows.stream()
                 .map(dto -> {
                     List<String> colors = deckColorsCache.computeIfAbsent(
@@ -49,12 +48,9 @@ public class UncheckedCardService {
                                 return deck.getDeckColors();
                             }
                     );
-
                     return new UncheckedCardView(dto, colors);
                 })
                 .toList();
-
-        // Group by setCode for UI
         return wrapped.stream()
                 .collect(Collectors.groupingBy(
                         view -> view.base().setCode(),
@@ -62,5 +58,4 @@ public class UncheckedCardService {
                         Collectors.toList()
                 ));
     }
-
 }

@@ -93,7 +93,14 @@
                  data-bs-toggle="collapse"
                  th:attr="data-bs-target='#deckCollapse__' + ${deck.id}"
                  style="cursor: pointer;">
-                <h2 class="h5 mb-0" th:text="${deck.name}"></h2>
+                <h2 class="h5 mb-0">
+                    <span th:text="${deck.name}"></span>
+                    <span class="badge bg-info ms-2">
+                        <span th:text="${deck.totalCards}"></span> cards
+                        (<span th:text="${deck.checkedCount}"></span>/
+                         <span th:text="${deck.totalCards}"></span> checked)
+                    </span>
+                </h2>
             </div>
             <div class="d-flex align-items-center">
                 <a th:href="@{/user/deck/{deckId}(deckId=${deck.id})}"
