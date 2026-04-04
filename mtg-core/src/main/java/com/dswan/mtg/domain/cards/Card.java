@@ -54,6 +54,8 @@ public class Card {
     @Transient
     private boolean checked = false;
     @Transient
+    private boolean proxy = false;
+    @Transient
     private String location = "mainboard";
     @Transient
     private String castingCostAndIdentity;

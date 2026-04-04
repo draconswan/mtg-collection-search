@@ -20,9 +20,7 @@ const DeckUI = (() => {
         const resultsBox = document.getElementById("cardSearchResults");
 
         const response = await fetch(`/api/v1/cards/search?cardName=${encodeURIComponent(query)}`);
-        if (!response.ok) {
-            return;
-        }
+        if (!response.ok) return;
 
         const cards = await response.json();
         resultsBox.innerHTML = "";
@@ -64,7 +62,7 @@ const DeckUI = (() => {
 
         const response = await fetch(`/api/v1/decks/${deckId}/add-card`, {
             method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
             body: `cardId=${encodeURIComponent(selectedCardId)}`
         });
 
@@ -85,7 +83,7 @@ const DeckUI = (() => {
 
         const response = await fetch(`/api/v1/decks/${deckId}/remove-card`, {
             method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
             body: `cardId=${encodeURIComponent(cardId)}`
         });
 
@@ -103,33 +101,24 @@ const DeckUI = (() => {
         const cardId = input.dataset.cardId;
         const deckId = input.dataset.deckId;
         const index = input.dataset.index;
-        const type = input.dataset.type;
         const quantity = parseInt(input.value, 10);
 
         const response = await fetch(`/api/v1/decks/${deckId}/update-quantity`, {
             method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
             body: `cardId=${encodeURIComponent(cardId)}&quantity=${encodeURIComponent(quantity)}`
         });
 
         if (response.ok) {
-            // Visual feedback
             input.classList.add("border-success");
             setTimeout(() => input.classList.remove("border-success"), 600);
 
-            // Keep label metadata in sync
             const label = document.querySelector(`label[data-card-id="${cardId}"]`);
-            if (label) {
-                label.dataset.quantity = quantity;
-            }
+            if (label) label.dataset.quantity = quantity;
 
-            // Keep hidden form field in sync so Save Deck submits correct data
             const hidden = document.getElementById(`hidden_qty_${index}`);
-            if (hidden) {
-                hidden.value = quantity;
-            }
+            if (hidden) hidden.value = quantity;
 
-            // Update totals (group totals and deck total)
             updateTotals();
         } else {
             input.classList.add("border-danger");
@@ -142,6 +131,7 @@ const DeckUI = (() => {
 
         const typeTotals = {};
         let total = 0;
+        let proxyCount = 0;
 
         rows.forEach(row => {
             const type = row.dataset.type;
@@ -150,20 +140,26 @@ const DeckUI = (() => {
 
             total += qty;
             typeTotals[type] = (typeTotals[type] || 0) + qty;
+
+            const cb = row.querySelector(".tri-check");
+            if (cb && cb.dataset.proxy === "true") {
+                proxyCount += qty;
+            }
         });
 
-        // Update per-type totals
         for (const [type, qty] of Object.entries(typeTotals)) {
             const el = document.getElementById(`typeTotal_${type}`);
-            if (el) {
-                el.textContent = qty;
-            }
+            if (el) el.textContent = qty;
         }
 
-        // Update overall total
         const totalEl = document.getElementById("totalQuantity");
-        if (totalEl) {
-            totalEl.textContent = "Total Cards: " + total;
+        if (totalEl) totalEl.textContent = "Total Cards: " + total;
+
+        const proxyEl = document.getElementById("proxyCount");
+        if (proxyEl) {
+            proxyEl.textContent = proxyCount > 0
+                ? `(${proxyCount} proxied)`
+                : "";
         }
     }
 
@@ -172,24 +168,20 @@ const DeckUI = (() => {
     // -----------------------------
     function sendUncheckedCards() {
         const unchecked = Array.from(
-            document.querySelectorAll('#saveDeckForm .form-check-input')
+            document.querySelectorAll('#saveDeckForm .tri-check')
         )
-        .filter(input => !input.checked)
-        .map(input => {
-            const label = document.querySelector(`label[for="${input.id}"]`);
-            const qty = label.dataset.quantity;
-            const name = label.dataset.name;
-            return `${qty} ${name}`;
-        });
+            .filter(cb => cb.dataset.checked !== "true")
+            .map(cb => {
+                const label = document.querySelector(`label[for="${cb.id}"]`);
+                return `${label.dataset.quantity} ${label.dataset.name}`;
+            });
 
         if (unchecked.length === 0) {
             alert("There are no unchecked cards to send.");
             return;
         }
 
-        const payload = unchecked.join("\n");
-
-        document.getElementById('cardNames').value = payload;
+        document.getElementById('cardNames').value = unchecked.join("\n");
         document.getElementById('sendForm').submit();
     }
 
@@ -198,67 +190,79 @@ const DeckUI = (() => {
     // -----------------------------
     function copyUncheckedCards() {
         const unchecked = Array.from(
-            document.querySelectorAll('#saveDeckForm .form-check-input')
+            document.querySelectorAll('#saveDeckForm .tri-check')
         )
-        .filter(input => !input.checked)
-        .map(input => {
-            const label = document.querySelector(`label[for="${input.id}"]`);
-            const qty = label.dataset.quantity;
-            const name = label.dataset.name;
-            return `${qty} ${name}`;
-        });
+            .filter(cb => cb.dataset.checked !== "true")
+            .map(cb => {
+                const label = document.querySelector(`label[for="${cb.id}"]`);
+                return `${label.dataset.quantity} ${label.dataset.name}`;
+            });
 
         if (unchecked.length === 0) {
             showToast("No unchecked cards to copy.", "danger");
             return;
         }
 
-        const text = unchecked.join("\n");
-
-        navigator.clipboard.writeText(text)
-            .then(() => {
-                showToast("Unchecked cards copied to clipboard.", "success");
-            })
-            .catch(err => {
-                console.error("Clipboard copy failed:", err);
-                showToast("Could not copy to clipboard.", "danger");
-            });
+        navigator.clipboard.writeText(unchecked.join("\n"))
+            .then(() => showToast("Unchecked cards copied to clipboard.", "success"))
+            .catch(() => showToast("Could not copy to clipboard.", "danger"));
     }
 
     function showToast(message, type = "success") {
         const toastEl = document.getElementById("copyToast");
-
-        // Update message + color
         toastEl.querySelector(".toast-body").textContent = message;
         toastEl.className = `toast text-bg-${type} border-0`;
 
-        const toast = bootstrap.Toast.getOrCreateInstance(toastEl, {
-            delay: 3000,   // auto-close after 3 seconds
+        bootstrap.Toast.getOrCreateInstance(toastEl, {
+            delay: 3000,
             autohide: true
-        });
+        }).show();
+    }
 
-        toast.show();
+    // -----------------------------
+    // Bulk Actions (Tri-State Aware)
+    // -----------------------------
+    function applyTriState(checkedValue, proxyValue) {
+        document.querySelectorAll(".tri-check").forEach(cb => {
+            const row = cb.closest(".card-row");
+            const proxyInput = row.querySelector(".proxy-hidden");
+            const visual = cb.nextElementSibling;
+
+            cb.dataset.checked = checkedValue;
+            cb.dataset.proxy = proxyValue;
+
+            proxyInput.value = proxyValue;
+            cb.checked = checkedValue === "true";
+
+            if (proxyValue === "true") {
+                visual.textContent = "P";
+                visual.style.background = "#ffe08a";
+            } else if (checkedValue === "true") {
+                visual.textContent = "✓";
+                visual.style.background = "#c8f7c5";
+            } else {
+                visual.textContent = "";
+                visual.style.background = "white";
+            }
+        });
     }
 
     // -----------------------------
     // Init: Bind all events
     // -----------------------------
     function init() {
-        // Delete buttons
         document.querySelectorAll(".delete-card-btn").forEach(btn => {
             btn.addEventListener("click", () => deleteCard(btn));
         });
 
-        // Quantity inputs
         document.querySelectorAll(".quantity-input").forEach(input => {
             input.addEventListener("input", () => updateQuantity(input));
         });
 
-        // Search input
         const searchInput = document.getElementById("cardSearch");
         const resultsBox = document.getElementById("cardSearchResults");
 
-        searchInput.addEventListener("input", () => {
+        searchInput?.addEventListener("input", () => {
             const query = searchInput.value.trim();
             selectedCardId = null;
 
@@ -271,23 +275,30 @@ const DeckUI = (() => {
             searchTimeout = setTimeout(() => searchCards(query), 250);
         });
 
-        // Close search results on outside click
         document.addEventListener("click", (e) => {
             if (!resultsBox.contains(e.target) && e.target !== searchInput) {
                 resultsBox.style.display = "none";
             }
         });
 
-        // Buttons
         document.getElementById("addSelectedCardBtn")?.addEventListener("click", addSelectedCard);
-        document.getElementById("exportUncheckedBtn")?.addEventListener("click", exportUncheckedCards);
-        document.getElementById("clearUncheckedBtn")?.addEventListener("click", clearUncheckedCards);
         document.getElementById("sendUncheckedBtn")?.addEventListener("click", sendUncheckedCards);
         document.getElementById("copyUncheckedBtn")?.addEventListener("click", copyUncheckedCards);
+
+        // Bulk actions
+        document.getElementById("checkAllBtn")?.addEventListener("click", () => {
+            applyTriState("true", "false");
+        });
+
+        document.getElementById("uncheckAllBtn")?.addEventListener("click", () => {
+            applyTriState("false", "false");
+        });
     }
 
-    return { init };
+    return {init};
 })();
 
-// Initialize when DOM is ready
-document.addEventListener("DOMContentLoaded", DeckUI.init);
+document.addEventListener("DOMContentLoaded", () => {
+    DeckUI.init();
+    TriStateCheckbox.init();
+});

@@ -28,5 +28,8 @@ public class DeckCardEntity {
     private Boolean checked = false;
 
     @Column(nullable = false)
+    private Boolean proxy = false;
+
+    @Column(nullable = false)
     private String location;
 }

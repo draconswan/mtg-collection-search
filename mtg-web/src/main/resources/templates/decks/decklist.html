@@ -20,28 +20,13 @@
             integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
             crossorigin="anonymous"></script>
     <script src="/js/mana-symbols.js" defer></script>
-    <script src="/js/deck.js"></script>
+    <script src="/js/deck.js" defer></script>
+    <script src="/js/triStateCheckbox.js" defer></script>
     <style>
         body {
             padding-bottom: 60px;
         }
     </style>
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const checkAllBtn = document.getElementById("checkAllBtn");
-            const uncheckAllBtn = document.getElementById("uncheckAllBtn");
-
-            checkAllBtn.addEventListener("click", () => {
-                document.querySelectorAll(".card-row input[type='checkbox']")
-                    .forEach(cb => cb.checked = true);
-            });
-
-            uncheckAllBtn.addEventListener("click", () => {
-                document.querySelectorAll(".card-row input[type='checkbox']")
-                    .forEach(cb => cb.checked = false);
-            });
-        });
-    </script>
 </head>
 <body>
 <!-- Include header -->
@@ -132,11 +117,17 @@
                         </h5>
                         <div th:each="cardEntry : ${entryGroup.value}" class="card-row" th:data-type="${entryGroup.key}" th:data-index="${cardEntry.index}">
                             <div class="card-col-checkbox">
-                                <input class="form-check-input"
+                                <input class="form-check-input tri-check"
                                        type="checkbox"
                                        th:id="'card_' + ${cardEntry.index}"
                                        th:name="cards[__${cardEntry.index}__].checked"
-                                       th:checked="${cardEntry.card.checked}"/>
+                                       th:data-checked="${cardEntry.card.checked}"
+                                       th:data-proxy="${cardEntry.card.proxy}"
+                                       th:checked="${cardEntry.card.checked}" />
+                                <input type="hidden"
+                                       class="proxy-hidden"
+                                       th:name="cards[__${cardEntry.index}__].proxy"
+                                       th:value="${cardEntry.card.proxy}" />
                             </div>
                             <div class="card-col-qty">
                                 <input type="number"
@@ -184,7 +175,10 @@
         <button type="submit" form="saveDeckForm" class="btn btn-success">
             Save Deck
         </button>
-        <h6 class="text-muted" id="totalQuantity" th:text="'Total cards: ' + ${totalQuantity}"></h6>
+        <h6 class="text-muted">
+            <span id="totalQuantity" th:text="'Total cards: ' + ${totalQuantity}"></span>
+            <span id="proxyCount" th:text="'(' + ${totalProxies} + ' proxies)'"></span>
+        </h6>
         <button id="sendUncheckedBtn" type="button" class="btn btn-outline-primary">
             Send Unchecked Cards to Checklist
         </button>

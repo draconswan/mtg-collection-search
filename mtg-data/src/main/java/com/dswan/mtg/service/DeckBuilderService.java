@@ -56,6 +56,7 @@ public class DeckBuilderService {
                     .map(CardMapper::toDomain)
                     .orElseThrow(() -> new RuntimeException("Card not found: " + cs.getCardId()));
             card.setChecked(cs.isChecked());
+            card.setProxy(cs.isProxy());
             card.setQuantity(cs.getQuantity());
             cards.add(card);
         }

@@ -45,6 +45,9 @@ public class DeckManagementController {
         int totalQuantity = typeQuantities.values().stream()
                 .mapToInt(Integer::intValue)
                 .sum();
+        Long totalProxies = cardEntries.stream()
+                .filter(c -> c.getCard().isProxy())
+                .count();
         DeckStateForm form = new DeckStateForm();
         form.setDeckId(deckId);
         form.setDeckName(deck.getName());
@@ -62,6 +65,7 @@ public class DeckManagementController {
         model.addAttribute("groupedDecklist", orderedGroups);
         model.addAttribute("typeQuantities", typeQuantities);
         model.addAttribute("totalQuantity", totalQuantity);
+        model.addAttribute("totalProxies", totalProxies);
         model.addAttribute("deckName", deck.getName());
         model.addAttribute("deckFormat", deck.getType());
         model.addAttribute("pageTitle", deck.getName());

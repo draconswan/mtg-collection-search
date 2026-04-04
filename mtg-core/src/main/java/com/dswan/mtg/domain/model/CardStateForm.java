@@ -7,4 +7,5 @@ public class CardStateForm {
     private String cardId;
     private int quantity;
     private boolean checked;
+    private boolean proxy;
 }
