@@ -10,6 +10,7 @@ import com.dswan.mtg.domain.model.DeckStateForm;
 import com.dswan.mtg.repository.CardRepository;
 import com.dswan.mtg.repository.DeckRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
@@ -50,17 +51,19 @@ public class DeckBuilderService {
             deck.setCreatedAt(ZonedDateTime.now());
         }
         deck.setLastUpdated(ZonedDateTime.now());
-        List<Card> cards = new ArrayList<>();
-        for (CardStateForm cs : deckStateForm.getCards()) {
-            Card card = cardRepository.findById(UUID.fromString(cs.getCardId()))
-                    .map(CardMapper::toDomain)
-                    .orElseThrow(() -> new RuntimeException("Card not found: " + cs.getCardId()));
-            card.setChecked(cs.isChecked());
-            card.setProxy(cs.isProxy());
-            card.setQuantity(cs.getQuantity());
-            cards.add(card);
+        if (!CollectionUtils.isEmpty(deckStateForm.getCards())) {
+            List<Card> cards = new ArrayList<>();
+            for (CardStateForm cs : deckStateForm.getCards()) {
+                Card card = cardRepository.findById(UUID.fromString(cs.getCardId()))
+                        .map(CardMapper::toDomain)
+                        .orElseThrow(() -> new RuntimeException("Card not found: " + cs.getCardId()));
+                card.setChecked(cs.isChecked());
+                card.setProxy(cs.isProxy());
+                card.setQuantity(cs.getQuantity());
+                cards.add(card);
+            }
+            deck.setCards(cards);
         }
-        deck.setCards(cards);
         return deck;
     }
 

@@ -5,6 +5,7 @@ import com.dswan.mtg.domain.cards.Deck;
 import com.dswan.mtg.domain.entity.DeckCardEntity;
 import com.dswan.mtg.domain.entity.DeckCardId;
 import com.dswan.mtg.domain.entity.DeckEntity;
+import com.dswan.mtg.util.CardColorComparator;
 
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ public class DeckMapper {
         entity.setLastUpdated(domain.getLastUpdated() != null
                 ? domain.getLastUpdated().toOffsetDateTime()
                 : null);
+        entity.setColors(domain.getDeckColors().stream().sorted(new CardColorComparator()).collect(Collectors.joining()));
         return entity;
     }
 
@@ -67,6 +69,7 @@ public class DeckMapper {
         entity.setLastUpdated(domain.getLastUpdated() != null
                 ? domain.getLastUpdated().toOffsetDateTime()
                 : null);
+        entity.setColors(domain.getDeckColors().stream().sorted(new CardColorComparator()).collect(Collectors.joining()));
     }
 
     public static void syncCards(DeckEntity entity, Deck domain) {

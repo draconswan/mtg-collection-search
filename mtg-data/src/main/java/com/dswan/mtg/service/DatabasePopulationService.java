@@ -8,12 +8,14 @@ import com.dswan.mtg.domain.entity.CardEntity;
 import com.dswan.mtg.domain.mapper.CardMapper;
 import com.dswan.mtg.dto.BulkDataItem;
 import com.dswan.mtg.dto.BulkDataResponse;
+import com.dswan.mtg.dto.StatusMessage;
 import com.dswan.mtg.dto.UpdateResult;
 import com.dswan.mtg.repository.DataVersionRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;
@@ -44,17 +46,20 @@ public class DatabasePopulationService {
     private final CardBatchService cardBatchService; // <-- injected batch service
     private final ObjectMapper objectMapper;
     private final MTGProperties mtgProperties;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public DatabasePopulationService(ScryfallBulkDataWebClientService scryfallBulkDataWebClientService,
                                      DataVersionRepository dataVersionRepository,
                                      CardBatchService cardBatchService,
                                      @Qualifier("jsonObjectMapper") ObjectMapper objectMapper,
-                                     MTGProperties mtgProperties) {
+                                     MTGProperties mtgProperties,
+                                     SimpMessagingTemplate messagingTemplate) {
         this.scryfallBulkDataWebClientService = scryfallBulkDataWebClientService;
         this.dataVersionRepository = dataVersionRepository;
         this.cardBatchService = cardBatchService;
         this.objectMapper = objectMapper;
         this.mtgProperties = mtgProperties;
+        this.messagingTemplate = messagingTemplate;
     }
 
     public UpdateResult checkAndUpdateDatabase(boolean forceUpdate) {
@@ -96,8 +101,10 @@ public class DatabasePopulationService {
                         if (shouldDownload) {
                             log.info("Downloading Scryfall All Cards data...");
                             BULK_FILE.getParentFile().mkdirs();
+                            messagingTemplate.convertAndSend("/topic/refresh-status", new StatusMessage("Downloading Scryfall datafile"));
                             downloadWithRetry(new URL(dataItem.getDownloadUri()), BULK_FILE, 3);
                             BULK_FILE.setLastModified(dataItem.getUpdatedAt().toEpochMilli());
+                            messagingTemplate.convertAndSend("/topic/refresh-status", new StatusMessage("File downloaded"));
                         }
 
                         try (InputStream inputStream = Files.newInputStream(BULK_FILE.toPath());
@@ -125,6 +132,10 @@ public class DatabasePopulationService {
                                 if (batch.size() >= batchSize) {
                                     cardBatchService.saveBatch(batch);
                                     count += batch.size();
+                                    messagingTemplate.convertAndSend(
+                                            "/topic/refresh-status",
+                                            new StatusMessage("Processing cards", count)
+                                    );
                                     log.info("Processed {} cards...", count);
                                     batch.clear();
                                 }
@@ -133,6 +144,10 @@ public class DatabasePopulationService {
                             if (!batch.isEmpty()) {
                                 cardBatchService.saveBatch(batch);
                                 count += batch.size();
+                                messagingTemplate.convertAndSend(
+                                        "/topic/refresh-status",
+                                        new StatusMessage("Processing cards", count)
+                                );
                             }
                             log.info("Finished processing {} cards total.", count);
                             version.setLast_refresh(LocalDateTime.now());

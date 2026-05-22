@@ -4,6 +4,9 @@ import liquibase.integration.spring.SpringLiquibase;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.ObjectMapper;
@@ -14,6 +17,7 @@ import org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect;
 import javax.sql.DataSource;
 
 @Configuration
+@EnableRetry
 public class AppConfig {
     @Bean
     @Profile("!test")
@@ -27,8 +31,12 @@ public class AppConfig {
     }
 
     @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
+    public RestClient restClient() {
+        return RestClient.builder()
+                .requestFactory(new HttpComponentsClientHttpRequestFactory())
+                .defaultHeader("User-Agent", "MTGCollectionSearch/1.0.0 (https://github.com/draconswan/mtg-collection-search)")
+                .defaultHeader("Accept", "application/json")
+                .build();
     }
 
     @Bean

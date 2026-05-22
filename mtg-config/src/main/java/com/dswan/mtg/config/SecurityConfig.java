@@ -20,8 +20,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) {
-        http.csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
+        http.csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/ws-refresh", "/ws-refresh/**"))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/ws-refresh", "/ws-refresh/**").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/user/login**", "/user/register**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")

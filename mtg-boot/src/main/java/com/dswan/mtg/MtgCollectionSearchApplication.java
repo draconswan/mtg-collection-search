@@ -1,21 +1,22 @@
 package com.dswan.mtg;
 
 import com.dswan.mtg.config.MTGProperties;
+import com.dswan.mtg.config.WebSocketConfig;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-@Configuration
 @SpringBootApplication
 @EnableConfigurationProperties(MTGProperties.class)
 @EnableJpaRepositories(basePackages = "com.dswan.mtg.repository")
 @ComponentScan(basePackages = "com.dswan.mtg")
+@Import({WebSocketConfig.class})
 public class MtgCollectionSearchApplication {
 
     @Autowired

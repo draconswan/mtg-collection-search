@@ -2,6 +2,7 @@ package com.dswan.mtg.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,9 @@ public class DeckEntity {
 
     @Column(name = "last_updated", nullable = false)
     private OffsetDateTime lastUpdated;
+
+    @Column(name = "colors", nullable = false)
+    private String colors;
 
     @OneToMany(mappedBy = "deckEntity", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DeckCardEntity> cards = new ArrayList<>();

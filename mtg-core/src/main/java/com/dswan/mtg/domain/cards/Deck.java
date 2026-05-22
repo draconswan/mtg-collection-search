@@ -6,6 +6,7 @@ import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,6 +50,9 @@ public class Deck {
     }
 
     public void calculateDeckColors() {
+        if (this.cards == null) {
+            this.cards = new ArrayList<>();
+        }
         List<String> rawColors = this.cards.stream()
                 .flatMap(card -> {
                     List<String> ci = card.getColorIdentity();
