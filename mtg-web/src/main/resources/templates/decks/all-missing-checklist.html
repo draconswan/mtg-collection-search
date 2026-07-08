@@ -20,23 +20,80 @@
             integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
             crossorigin="anonymous"></script>
     <script src="/js/mana-symbols.js" defer></script>
+    <script src="/js/card-preview.js" defer></script>
 </head>
 <body>
 <div th:replace="~{fragments/header :: body}"></div>
+<div id="card-preview" class="card-preview"></div>
 <div class="container py-4">
     <h1 class="mb-4">All Missing Cards</h1>
     <p class="text-muted">
         This page lists every card across all decks that is not marked as acquired.
     </p>
+    <!-- Pagination Top -->
+    <div class="no-print mb-3">
+        <nav aria-label="Pagination">
+            <ul class="pagination justify-content-center">
+                <!-- Previous -->
+                <li class="page-item" th:classappend="${page > 0} ? '' : 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/user/decks/all-missing(page=${page - 1}, size=${size})}">
+                        Previous
+                    </a>
+                </li>
+                <!-- First page -->
+                <li class="page-item" th:classappend="${page == 0} ? 'active'">
+                    <a class="page-link"
+                       th:href="@{/user/decks/all-missing(page=0, size=${size})}">
+                        1
+                    </a>
+                </li>
+                <!-- Ellipsis before window -->
+                <li class="page-item disabled" th:if="${page > 3}">
+                    <span class="page-link">…</span>
+                </li>
+                <!-- Windowed pages -->
+                <li class="page-item"
+                    th:each="i : ${#numbers.sequence(page-2, page+2)}"
+                    th:if="${i > 0 and i < totalPages}"
+                    th:classappend="${i == page} ? 'active'">
+                    <a class="page-link"
+                       th:text="${i + 1}"
+                       th:href="@{/user/decks/all-missing(page=${i}, size=${size})}">
+                    </a>
+                </li>
+                <!-- Ellipsis after window -->
+                <li class="page-item disabled" th:if="${page < totalPages - 3}">
+                    <span class="page-link">…</span>
+                </li>
+                <!-- Last page -->
+                <li class="page-item"
+                    th:classappend="${page == totalPages - 1} ? 'active'">
+                    <a class="page-link"
+                       th:text="${totalPages}"
+                       th:href="@{/user/decks/all-missing(page=${totalPages - 1}, size=${size})}">
+                    </a>
+                </li>
+                <!-- Next -->
+                <li class="page-item" th:classappend="${page < totalPages - 1} ? '' : 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/user/decks/all-missing(page=${page + 1}, size=${size})}">
+                        Next
+                    </a>
+                </li>
+
+            </ul>
+        </nav>
+    </div>
     <form action="/user/decks/update-all" method="post">
         <!-- Loop over sets -->
-        <div th:each="entry, setIter : ${groupedBySet}">
+        <div class="my-2" th:each="entry, setIter : ${groupedBySet}">
             <!-- Collapsible header -->
             <div class="set-header"
                  data-bs-toggle="collapse"
                  th:attr="data-bs-target='#set-' + ${setIter.index}">
-                <img th:src="@{/set-icon/{code}.svg(code=${entry.value[0].base().setCode()})}" height="20">
-                <strong th:text="${entry.value[0].base().setName()}"></strong>
+                <img th:src="@{/set-icon/{code}.svg(code=${entry.value[0].base().getSetCode()})}" height="20">
+                <strong th:text="${entry.value[0].base().getSetName()}"></strong>
             </div>
             <!-- Collapsible content -->
             <div class="collapse show mt-2"
@@ -50,21 +107,26 @@
                                 <!-- Hidden fields for global form -->
                                 <input type="hidden"
                                        th:name="'cards[' + ${iter.index} + '].deckId'"
-                                       th:value="${card.base().deckId()}"/>
+                                       th:value="${card.base().getDeckId()}"/>
                                 <input type="hidden"
                                        th:name="'cards[' + ${iter.index} + '].cardId'"
-                                       th:value="${card.base().cardId()}"/>
+                                       th:value="${card.base().getCardId()}"/>
                                 <!-- Checkbox bound to global form -->
                                 <input type="checkbox"
                                        th:name="'cards[' + ${iter.index} + '].checked'"/>
-                                <span th:text="${card.base().displayName()}"></span>
+                                <a th:href="${card.base().getScryfallUri()}"
+                                   th:text="${card.base().displayName()}"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="card-link"
+                                   th:attr="data-img-url=${card.base().getImageUris().normal}"></a>
                                 <span class="quantity-pill"
-                                      th:text="'x' + ${card.base().quantity()}"></span>
-                                <span class="color-col" th:text="${card.base().manaCost()}"></span>
+                                      th:text="'x' + ${card.base().getQuantity()}"></span>
+                                <span class="color-col" th:text="${card.base().getManaCost()}"></span>
                             </div>
                             <div>
                                 <div class="deck-name">
-                                    <span th:text="${card.base().deckName()}"></span>
+                                    <span th:text="${card.base().getDeckName()}"></span>
                                     <span th:each="color : ${card.deckColors}"
                                           th:attr="data-mana=${color}"
                                           class="mana-symbol me-1"
@@ -76,6 +138,61 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <!-- Pagination Bottom -->
+        <div class="no-print mt-4">
+            <nav aria-label="Pagination">
+                <ul class="pagination justify-content-center">
+                    <!-- Previous -->
+                    <li class="page-item" th:classappend="${page > 0} ? '' : 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/user/decks/all-missing(page=${page - 1}, size=${size})}">
+                            Previous
+                        </a>
+                    </li>
+                    <!-- First page -->
+                    <li class="page-item" th:classappend="${page == 0} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/user/decks/all-missing(page=0, size=${size})}">
+                            1
+                        </a>
+                    </li>
+                    <!-- Ellipsis before window -->
+                    <li class="page-item disabled" th:if="${page > 3}">
+                        <span class="page-link">…</span>
+                    </li>
+                    <!-- Windowed pages -->
+                    <li class="page-item"
+                        th:each="i : ${#numbers.sequence(page-2, page+2)}"
+                        th:if="${i > 0 and i < totalPages}"
+                        th:classappend="${i == page} ? 'active'">
+                        <a class="page-link"
+                           th:text="${i + 1}"
+                           th:href="@{/user/decks/all-missing(page=${i}, size=${size})}">
+                        </a>
+                    </li>
+                    <!-- Ellipsis after window -->
+                    <li class="page-item disabled" th:if="${page < totalPages - 3}">
+                        <span class="page-link">…</span>
+                    </li>
+                    <!-- Last page -->
+                    <li class="page-item"
+                        th:classappend="${page == totalPages - 1} ? 'active'">
+                        <a class="page-link"
+                           th:text="${totalPages}"
+                           th:href="@{/user/decks/all-missing(page=${totalPages - 1}, size=${size})}">
+                        </a>
+                    </li>
+                    <!-- Next -->
+                    <li class="page-item" th:classappend="${page < totalPages - 1} ? '' : 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/user/decks/all-missing(page=${page + 1}, size=${size})}">
+                            Next
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
         </div>
         <!-- Submit all checked cards -->
         <button type="submit" class="btn btn-primary mt-3">

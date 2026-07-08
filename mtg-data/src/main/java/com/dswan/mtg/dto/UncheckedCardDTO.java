@@ -1,24 +1,43 @@
 package com.dswan.mtg.dto;
 
+import com.dswan.mtg.domain.cards.Images;
+import io.micrometer.common.util.StringUtils;
+import jakarta.persistence.Transient;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
-public record UncheckedCardDTO(
-        UUID deckId,
-        String deckName,
-        UUID cardId,
-        String oracleId,
-        String cardName,
-        String printedName,
-        String flavorName,
-        String lang,
-        String setCode,
-        String setName,
-        LocalDate releasedAt,
-        String typeLine,
-        String manaCost,
-        Long quantity
-) {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Slf4j
+public class UncheckedCardDTO {
+    private UUID deckId;
+    private String deckName;
+    private UUID cardId;
+    private String oracleId;
+    private String scryfallUri;
+    private String images;
+    private String cardName;
+    private String printedName;
+    private String flavorName;
+    private String lang;
+    private String setCode;
+    private String setName;
+    private LocalDate releasedAt;
+    private String typeLine;
+    private String manaCost;
+    private Long quantity;
+
+    //Derived Fields
+    @Transient
+    private Images imageUris;
+
     public String displayName() {
         if (lang != null && !lang.equals("en")) {
             return cardName;
@@ -30,5 +49,16 @@ public record UncheckedCardDTO(
             return flavorName + " (" + cardName + ")";
         }
         return cardName;
+    }
+
+    public void hydrateFromEntity() {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            if (StringUtils.isNotEmpty(this.images)) {
+                this.imageUris = mapper.readValue(images, Images.class);
+            }
+        } catch (Exception e) {
+            log.error("Error parsing JSON fields", e);
+        }
     }
 }

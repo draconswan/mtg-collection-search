@@ -30,7 +30,7 @@ public class DeckManagementController {
 
     @GetMapping("/deck/new")
     public String newDeck(Model model) {
-        return "redirect:search/input";
+        return "redirect:/search/input";
     }
 
     @GetMapping("/deck/{deckId}")

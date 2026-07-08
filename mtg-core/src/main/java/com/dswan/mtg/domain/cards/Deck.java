@@ -1,5 +1,7 @@
 package com.dswan.mtg.domain.cards;
 
+import com.dswan.mtg.domain.model.HasDeckColors;
+import com.dswan.mtg.domain.model.HasDeckType;
 import com.dswan.mtg.util.CardColorComparator;
 import lombok.Data;
 import lombok.Getter;
@@ -13,7 +15,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 @Data
-public class Deck {
+public class Deck implements HasDeckColors, HasDeckType {
     private String id;
     private String name;
     private String type;
@@ -27,6 +29,11 @@ public class Deck {
             calculateDeckColors();
         }
         return deckColors;
+    }
+
+    @Override
+    public String getDeckType() {
+        return type;
     }
 
     public int getCheckedCount() {

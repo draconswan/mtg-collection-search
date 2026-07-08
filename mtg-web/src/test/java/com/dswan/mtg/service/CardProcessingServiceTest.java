@@ -5,6 +5,10 @@ import com.dswan.mtg.domain.cards.Card;
 import com.dswan.mtg.domain.cards.CardEntry;
 import com.dswan.mtg.domain.entity.CardEntity;
 import com.dswan.mtg.domain.mapper.CardMapper;
+import com.dswan.mtg.domain.user.CollectionSortType;
+import com.dswan.mtg.dto.CmcGroupDTO;
+import com.dswan.mtg.dto.ColorGroupDTO;
+import com.dswan.mtg.dto.RarityGroupDTO;
 import com.dswan.mtg.repository.CardRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.dswan.mtg.util.CardProcessingUtil.calculateCMC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -35,6 +40,7 @@ class CardProcessingServiceTest {
             String releasedAt,
             String color,
             String collectorNumber,
+            String rarity,
             String gamesList
     ) {
         Card c = new Card();
@@ -45,6 +51,7 @@ class CardProcessingServiceTest {
         c.setReleasedAt(releasedAt);
         c.setColor(color);
         c.setCollectorNumber(collectorNumber);
+        c.setRarity(rarity);
         c.setGamesList(gamesList);
         return c;
     }
@@ -153,30 +160,173 @@ class CardProcessingServiceTest {
     }
 
     // ------------------------------------------------------------
-    // buildChecklist
+    // buildChecklist – SET mode
     // ------------------------------------------------------------
 
     @Test
     void buildChecklist_groupsSortsAndFilters() {
         Card c1 = card("Sol Ring", "cmm", "Commander Masters", "memorabilia",
-                "2023-08-01", "W", "123", "paper,arena");
+                "2023-08-01", "W", "123", "uncommon", "paper,arena");
 
         Card c2 = card("Lightning Bolt", "m10", "Magic 2010", "core",
-                "2009-07-17", "R", "150", "paper");
+                "2009-07-17", "R", "150", "common", "paper");
 
         var result = service.buildChecklist(
                 List.of(c1, c2),
-                List.of("paper")
+                List.of("paper"),
+                CollectionSortType.SET
         );
 
         assertThat(result)
+                .isInstanceOf(List.class);
+
+        @SuppressWarnings("unchecked")
+        List<?> list = (List<?>) result;
+
+        assertThat(list)
                 .hasSize(1)
                 .first()
-                .satisfies(dto -> {
+                .satisfies(dtoObj -> {
+                    var dto = (com.dswan.mtg.dto.CardSetDTO) dtoObj;
                     assertThat(dto.getSetCode()).isEqualTo("m10");
                     assertThat(dto.getCards()).hasSize(1);
                     assertThat(dto.getSetDate()).isEqualTo(LocalDate.parse("2009-07-17"));
                 });
+    }
+
+    @Test
+    @DisplayName("buildChecklist dispatches to SET mode")
+    void buildChecklist_dispatchesToSet() {
+        Card c = card("Sol Ring", "cmm", "Commander Masters", "core",
+                "2023-08-01", "W", "123", "uncommon", "paper");
+        c.setManaCost("{1}");
+
+        var result = service.buildChecklist(
+                List.of(c),
+                List.of("paper"),
+                CollectionSortType.SET
+        );
+
+        assertThat(result).isInstanceOf(List.class);
+        assertThat(((List<?>) result)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("SET mode filters by game type")
+    void setMode_filtersByGameType() {
+        Card c1 = card("Sol Ring", "cmm", "Commander Masters", "core",
+                "2023-08-01", "W", "123", "uncommon", "arena");
+        Card c2 = card("Lightning Bolt", "m10", "Magic 2010", "core",
+                "2009-07-17", "R", "150", "common", "paper");
+
+        var result = service.buildChecklist(
+                List.of(c1, c2),
+                List.of("paper"),
+                CollectionSortType.SET
+        );
+
+        @SuppressWarnings("unchecked")
+        List<com.dswan.mtg.dto.CardSetDTO> list = (List<com.dswan.mtg.dto.CardSetDTO>) result;
+
+        assertThat(list).hasSize(1);
+        assertThat(list.get(0).getCards()).extracting(Card::getName)
+                .containsExactly("Lightning Bolt");
+    }
+
+    // ------------------------------------------------------------
+    // buildChecklist – COLOR_RARITY_CMC mode
+    // ------------------------------------------------------------
+
+    @Test
+    @DisplayName("buildChecklist dispatches to COLOR_RARITY_CMC mode")
+    void buildChecklist_dispatchesToColorRarityCmc() {
+        Card c = card("Sol Ring", "cmm", "Commander Masters", "core",
+                "2023-08-01", "W", "123", "uncommon", "paper");
+        c.setManaCost("{1}{W}");
+
+        var result = service.buildChecklist(
+                List.of(c),
+                List.of("paper"),
+                CollectionSortType.COLOR_RARITY_CMC
+        );
+
+        assertThat(result).isInstanceOf(List.class);
+
+        @SuppressWarnings("unchecked")
+        List<ColorGroupDTO> groups = (List<ColorGroupDTO>) result;
+
+        assertThat(groups).hasSize(1);
+        assertThat(groups.get(0).getColor()).isEqualTo("White");
+    }
+
+    @Test
+    @DisplayName("COLOR_RARITY_CMC groups by color, rarity, and CMC")
+    void colorRarityCmc_groupsCorrectly() {
+        Card c1 = card("Sol Ring", "cmm", "Commander Masters", "core",
+                "2023-08-01", "W", "123", "uncommon", "paper");
+        c1.setManaCost("{1}{W}");
+
+        Card c2 = card("Swords to Plowshares", "2xm", "Double Masters", "core",
+                "2020-08-07", "W", "22", "uncommon", "paper");
+        c2.setManaCost("{W}");
+
+        var result = service.buildChecklist(
+                List.of(c1, c2),
+                List.of("paper"),
+                CollectionSortType.COLOR_RARITY_CMC
+        );
+
+        @SuppressWarnings("unchecked")
+        List<ColorGroupDTO> groups = (List<ColorGroupDTO>) result;
+
+        assertThat(groups).hasSize(1);
+        ColorGroupDTO white = groups.get(0);
+
+        assertThat(white.getColor()).isEqualTo("White");
+        assertThat(white.getRarities()).isNotEmpty();
+
+        RarityGroupDTO rarity = white.getRarities().get(0);
+        assertThat(rarity.getCmcs()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("CMC grouping inside COLOR_RARITY_CMC is correct")
+    void buildChecklist_colorRarityCmc_cmcGroupingCorrect() {
+        Card c = card("Test Card", "set", "Set Name", "core",
+                "2020-01-01", "U", "001", "Rare", "paper");
+        c.setManaCost("{2}{U}");
+
+        var result = service.buildChecklist(
+                List.of(c),
+                List.of("paper"),
+                CollectionSortType.COLOR_RARITY_CMC
+        );
+
+        @SuppressWarnings("unchecked")
+        List<ColorGroupDTO> groups = (List<ColorGroupDTO>) result;
+
+        CmcGroupDTO cmcGroup = groups.get(0)
+                .getRarities().get(0)
+                .getCmcs().get(0);
+
+        assertThat(cmcGroup.getCmc()).isEqualTo(3);
+        assertThat(cmcGroup.getCards()).extracting(Card::getName)
+                .containsExactly("Test Card");
+    }
+
+    // ------------------------------------------------------------
+    // calculateCMC
+    // ------------------------------------------------------------
+
+    @Test
+    @DisplayName("calculateCMC handles numeric, hybrid, phyrexian, snow, X")
+    void calculateCMC_allSymbols() {
+        assertThat(calculateCMC("{1}{W}{W}")).isEqualTo(3);
+        assertThat(calculateCMC("{X}{G}")).isEqualTo(1);
+        assertThat(calculateCMC("{2/U}{2/U}")).isEqualTo(4);
+        assertThat(calculateCMC("{W/P}{G/P}")).isEqualTo(2);
+        assertThat(calculateCMC("{S}{S}{G}")).isEqualTo(3);
+        assertThat(calculateCMC("")).isEqualTo(0);
     }
 
     // ------------------------------------------------------------
@@ -185,33 +335,25 @@ class CardProcessingServiceTest {
 
     @Test
     void chooseBestPrinting_prefersMatchingSet() {
-        Card c1 = card("Sol Ring", "cmm", null, null, null, null, "123", null);
-        Card c2 = card("Sol Ring", "m10", null, null, null, null, "123", null);
-
-        ParsedCardLine line = new ParsedCardLine(1, "Sol Ring",
-                Optional.of("m10"), Optional.empty(), "raw");
-
+        Card c1 = card("Sol Ring", "cmm", null, null, null, null, "123", "uncommon", null);
+        Card c2 = card("Sol Ring", "m10", null, null, null, null, "123", "uncommon", null);
+        ParsedCardLine line = new ParsedCardLine(1, "Sol Ring", Optional.of("m10"), Optional.empty(), "raw");
         Card result = CardProcessingService.chooseBestPrinting(List.of(c1, c2), line);
-
         assertThat(result).isEqualTo(c2);
     }
 
     @Test
     void chooseBestPrinting_prefersMatchingCollectorNumber() {
-        Card c1 = card("Sol Ring", "cmm", null, null, null, null, "123", null);
-        Card c2 = card("Sol Ring", "cmm", null, null, null, null, "350", null);
-
-        ParsedCardLine line = new ParsedCardLine(1, "Sol Ring",
-                Optional.empty(), Optional.of("350"), "raw");
-
+        Card c1 = card("Sol Ring", "cmm", null, null, null, null, "123", "uncommon", null);
+        Card c2 = card("Sol Ring", "cmm", null, null, null, null, "350", "uncommon", null);
+        ParsedCardLine line = new ParsedCardLine(1, "Sol Ring", Optional.empty(), Optional.of("350"), "raw");
         Card result = CardProcessingService.chooseBestPrinting(List.of(c1, c2), line);
-
         assertThat(result).isEqualTo(c2);
     }
 
     @Test
     void chooseBestPrinting_returnsNullIfNoMatch() {
-        Card c1 = card("Sol Ring", "cmm", null, null, null, null, "123", null);
+        Card c1 = card("Sol Ring", "cmm", null, null, null, null, "123", "uncommon", null);
 
         ParsedCardLine line = new ParsedCardLine(1, "Sol Ring",
                 Optional.of("m10"), Optional.empty(), "raw");
@@ -219,6 +361,23 @@ class CardProcessingServiceTest {
         Card result = CardProcessingService.chooseBestPrinting(List.of(c1), line);
 
         assertThat(result).isNull();
+    }
+
+    @Test
+    @DisplayName("chooseBestPrinting prefers English when multiple remain")
+    void chooseBestPrinting_prefersEnglish() {
+        Card c1 = card("Sol Ring", "cmm", null, null, null, null, "123", "uncommon", null);
+        c1.setLang("jp");
+
+        Card c2 = card("Sol Ring", "cmm", null, null, null, null, "123", "uncommon", null);
+        c2.setLang("en");
+
+        ParsedCardLine line = new ParsedCardLine(1, "Sol Ring",
+                Optional.empty(), Optional.empty(), "raw");
+
+        Card result = CardProcessingService.chooseBestPrinting(List.of(c1, c2), line);
+
+        assertThat(result).isEqualTo(c2);
     }
 
     // ------------------------------------------------------------
@@ -232,7 +391,6 @@ class CardProcessingServiceTest {
                 2 Lightning Bolt (M10) 150
                 """;
 
-        // Repository returns ENTITIES
         CardEntity solEntity = new CardEntity();
         solEntity.setId(UUID.randomUUID());
         solEntity.setName("Sol Ring");
@@ -257,13 +415,11 @@ class CardProcessingServiceTest {
         when(repo.findAllPrintingsForCardName("lightning bolt"))
                 .thenReturn(List.of(boltEntity));
 
-        // Service converts them to domain Cards
         Tuple<List<CardEntry>, List<String>> result = service.buildDecklist(input);
 
         assertThat(result._1()).hasSize(2);
         assertThat(result._2()).isEmpty();
 
-        // Validate the domain cards
         List<Card> cards = result._1().stream()
                 .map(CardEntry::getCard)
                 .toList();
@@ -284,5 +440,36 @@ class CardProcessingServiceTest {
 
         assertThat(result._1()).isEmpty();
         assertThat(result._2()).containsExactly("1 Missing Card");
+    }
+
+    @Test
+    @DisplayName("buildDecklist handles empty input")
+    void buildDecklist_emptyInput() {
+        Tuple<List<CardEntry>, List<String>> result = service.buildDecklist("");
+
+        assertThat(result._1()).isEmpty();
+        assertThat(result._2()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("buildDecklist handles missing set and collector number")
+    void buildDecklist_missingSetAndCollector() {
+        CardEntity e = new CardEntity();
+        e.setId(UUID.randomUUID());
+        e.setName("Sol Ring");
+        e.setSetCode("cmm");
+        e.setSetName("Commander Masters");
+        e.setSetType("masters");
+        e.setReleasedAt(LocalDate.parse("2023-08-01"));
+        e.setCollectorNumber("123");
+        e.setTypeLine("Artifact");
+
+        when(repo.findAllPrintingsForCardName("sol ring"))
+                .thenReturn(List.of(e));
+
+        Tuple<List<CardEntry>, List<String>> result = service.buildDecklist("1 Sol Ring");
+
+        assertThat(result._1()).hasSize(1);
+        assertThat(result._2()).isEmpty();
     }
 }

@@ -5,19 +5,25 @@ import com.dswan.mtg.domain.cards.Card;
 import com.dswan.mtg.domain.cards.CardEntry;
 import com.dswan.mtg.domain.entity.CardEntity;
 import com.dswan.mtg.domain.mapper.CardMapper;
+import com.dswan.mtg.domain.user.CollectionSortType;
 import com.dswan.mtg.dto.CardSetDTO;
+import com.dswan.mtg.dto.CmcGroupDTO;
+import com.dswan.mtg.dto.ColorGroupDTO;
+import com.dswan.mtg.dto.RarityGroupDTO;
 import com.dswan.mtg.repository.CardRepository;
 import com.dswan.mtg.util.CardColorComparator;
 import com.dswan.mtg.util.CardNameNormalizer;
 import com.dswan.mtg.util.CardProcessingUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.util.Tuple;
 
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static com.dswan.mtg.util.CardProcessingUtil.*;
@@ -86,7 +92,17 @@ public class CardProcessingService {
                 .toList();
     }
 
-    public List<CardSetDTO> buildChecklist(List<Card> allCards, List<String> selectedGameTypes) {
+    public Object buildChecklist(List<Card> allCards,
+                                 List<String> selectedGameTypes,
+                                 CollectionSortType sortType) {
+
+        return switch (sortType) {
+            case SET -> buildChecklistBySet(allCards, selectedGameTypes);
+            case COLOR_RARITY_CMC -> buildChecklistByColorRarityCmc(allCards);
+        };
+    }
+
+    public List<CardSetDTO> buildChecklistBySet(List<Card> allCards, List<String> selectedGameTypes) {
         return allCards.stream()
                 .collect(Collectors.groupingBy(Card::getSet))
                 .entrySet().stream()
@@ -117,6 +133,61 @@ public class CardProcessingService {
                         .anyMatch(selectedGameTypes::contains))
                 .toList();
     }
+
+    private List<ColorGroupDTO> buildChecklistByColorRarityCmc(List<Card> allCards) {
+        Map<String, Map<String, Map<Integer, List<Card>>>> grouped =
+                allCards.stream().collect(
+                        Collectors.groupingBy(
+                                card -> {
+                                    String colors = card.getColor();
+                                    if (colors == null || colors.isBlank()) {
+                                        return "Colorless";
+                                    }
+                                    if (colors.length() == 1) {
+                                        return switch (colors) {
+                                            case "W" -> "White";
+                                            case "U" -> "Blue";
+                                            case "B" -> "Black";
+                                            case "R" -> "Red";
+                                            case "G" -> "Green";
+                                            default -> "Colorless";
+                                        };
+                                    }
+                                    return "Multi";
+                                },
+                                Collectors.groupingBy(
+                                        Card::getRarity,
+                                        Collectors.groupingBy(
+                                                card -> calculateCMC(card.getManaCost()),
+                                                Collectors.toList()
+                                        )
+                                )
+                        )
+                );
+
+        return grouped.entrySet().stream()
+                .map(colorEntry -> {
+                    List<RarityGroupDTO> rarityGroups =
+                            colorEntry.getValue().entrySet().stream()
+                                    .map(rarityEntry -> {
+                                        List<CmcGroupDTO> cmcGroups =
+                                                rarityEntry.getValue().entrySet().stream()
+                                                        .map(cmcEntry ->
+                                                                new CmcGroupDTO(cmcEntry.getKey(), cmcEntry.getValue()))
+                                                        .sorted(Comparator.comparingInt(CmcGroupDTO::getCmc))
+                                                        .toList();
+
+                                        return new RarityGroupDTO(rarityEntry.getKey(), cmcGroups);
+                                    })
+                                    .sorted(Comparator.comparing(RarityGroupDTO::getRarity))
+                                    .toList();
+
+                    return new ColorGroupDTO(colorEntry.getKey(), rarityGroups);
+                })
+                .sorted(Comparator.comparing(ColorGroupDTO::getColor, new CardColorComparator()))
+                .toList();
+    }
+
 
     // ------------------------------------------------------------
     // 3. Decklist builder

@@ -1,5 +1,6 @@
 package com.dswan.mtg.domain.entity;
 
+import com.dswan.mtg.domain.user.CollectionSortType;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -22,6 +23,10 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CollectionSortType sortType;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

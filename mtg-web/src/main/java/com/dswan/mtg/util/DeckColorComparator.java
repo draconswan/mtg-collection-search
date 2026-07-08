@@ -1,16 +1,16 @@
 package com.dswan.mtg.util;
 
-import com.dswan.mtg.domain.cards.Deck;
+import com.dswan.mtg.domain.model.HasDeckColors;
 
 import java.util.Comparator;
 import java.util.List;
 
-public class DeckColorComparator implements Comparator<Deck> {
+public class DeckColorComparator<T extends HasDeckColors> implements Comparator<T> {
 
     private static final CardColorComparator CARD_COLOR_COMPARATOR = new CardColorComparator();
 
     @Override
-    public int compare(Deck d1, Deck d2) {
+    public int compare(T d1, T d2) {
         List<String> c1 = d1.getDeckColors();
         List<String> c2 = d2.getDeckColors();
         boolean d1Colorless = c1.size() == 1 && c1.contains("C");

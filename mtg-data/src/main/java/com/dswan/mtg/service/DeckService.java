@@ -3,6 +3,7 @@ package com.dswan.mtg.service;
 import com.dswan.mtg.domain.cards.Deck;
 import com.dswan.mtg.domain.entity.*;
 import com.dswan.mtg.domain.mapper.DeckMapper;
+import com.dswan.mtg.dto.DeckSummaryView;
 import com.dswan.mtg.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +61,11 @@ public class DeckService {
             return null;
         }
         return DeckMapper.toDomain(entity.get());
+    }
+
+    @Transactional
+    public List<DeckSummaryView> getDecksSummaryForUser(Long userId) {
+        return deckRepository.findDeckSummaries(userId);
     }
 
     @Transactional

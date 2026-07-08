@@ -4,11 +4,12 @@ import com.dswan.mtg.domain.cards.DeckFormats;
 import com.dswan.mtg.domain.entity.User;
 import com.dswan.mtg.domain.entity.UserDetailsDto;
 import com.dswan.mtg.domain.entity.UserLandGroupReportDto;
-import com.dswan.mtg.domain.cards.Deck;
+import com.dswan.mtg.dto.DeckSummaryView;
 import com.dswan.mtg.dto.UncheckedCardView;
 import com.dswan.mtg.service.DeckService;
 import com.dswan.mtg.service.UncheckedCardService;
 import com.dswan.mtg.util.DeckColorComparator;
+import com.dswan.mtg.util.DeckTypeComparator;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Controller
 @AllArgsConstructor
@@ -39,9 +41,20 @@ public class UserController {
     @GetMapping("/decks")
     public String decks(@AuthenticationPrincipal UserDetailsDto details, Model model) {
         User user = details.getUser();
-        List<Deck> decks = deckService.getDecksForUser(user.getId());
-        decks.forEach(Deck::calculateDeckColors);
-        decks.sort(new DeckColorComparator());
+        List<DeckSummaryView> decks = deckService.getDecksSummaryForUser(user.getId());
+        decks = decks.stream().map(d -> new DeckSummaryView(
+                        d.id(),
+                        d.name(),
+                        d.type(),
+                        d.totalCards(),
+                        d.checkedCount(),
+                        d.proxyCount(),
+                        d.deckColors(),
+                        d.computeBadgeClass(d)
+                ))
+                .sorted(new DeckColorComparator<>())
+                .sorted(new DeckTypeComparator<>())
+                .toList();
         model.addAttribute("decks", decks);
         model.addAttribute("pageTitle", "User Decks");
         model.addAttribute("deckCount", decks.size());
@@ -61,10 +74,16 @@ public class UserController {
     @GetMapping("/decks/all-missing")
     public String allMissingCards(@AuthenticationPrincipal UserDetailsDto details,
                                   @RequestParam(required = false) List<String> type,
+                                  @RequestParam(defaultValue = "0") Integer page,
+                                  @RequestParam(defaultValue = "10") Integer numSets,
                                   Model model) {
         Long userId = details.getUser().getId();
-        Map<String, List<UncheckedCardView>> missingGroupedBySet = uncheckedCardService.getUncheckedCardsGroupedBySet(userId, type);
+        AtomicReference<Integer> pagesRef = new AtomicReference<>();
+        Map<String, List<UncheckedCardView>> missingGroupedBySet = uncheckedCardService.getUncheckedCardsGroupedBySet(userId, type, page, numSets, pagesRef);
         model.addAttribute("groupedBySet", missingGroupedBySet);
+        model.addAttribute("page", page);
+        model.addAttribute("numSets", numSets);
+        model.addAttribute("totalPages", pagesRef.get());
         return "decks/all-missing-checklist";
     }
 }

@@ -99,6 +99,8 @@ public class Card {
         }
         if (!CollectionUtils.isEmpty(colorIdentity) && StringUtils.isNotEmpty(manaCost)) {
             this.castingCostAndIdentity = manaCost + " / " + color;
+        } else if (StringUtils.isNotEmpty(manaCost)) {
+            this.castingCostAndIdentity = manaCost + " / {C}";
         } else {
             this.castingCostAndIdentity = "";
         }

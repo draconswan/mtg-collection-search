@@ -18,22 +18,58 @@ public class CardProcessingUtil {
             "PHED", "slx"
     );
 
-
     public static boolean notSectionHeader(String line) {
         String lower = line.toLowerCase();
         return SECTION_HEADERS.stream().noneMatch(lower::startsWith);
     }
 
+    public static int calculateCMC(String manaCost) {
+        if (manaCost == null || manaCost.isBlank()) {
+            return 0;
+        }
+        List<String> symbols =
+                Pattern.compile("\\{([^}]+)}")
+                        .matcher(manaCost)
+                        .results()
+                        .map(m -> m.group(1))
+                        .toList();
+
+        int total = 0;
+        for (String sym : symbols) {
+            // X always counts as 0
+            if (sym.equals("X")) {
+                continue;
+            }
+            // Pure number: {0}, {1}, {2}, ...
+            if (sym.matches("\\d+")) {
+                total += Integer.parseInt(sym);
+                continue;
+            }
+            // Hybrid with a number: {2/U}, {3/G}, etc.
+            if (sym.matches("\\d+/.+")) {
+                int n = Integer.parseInt(sym.substring(0, sym.indexOf('/')));
+                total += n;
+                continue;
+            }
+            // Everything else (W, U, B, R, G, C, S, W/U, G/P, etc.)
+            total += 1;
+        }
+        return total;
+    }
+
     public static int extractQuantity(String line) {
         String[] parts = line.split("\\s+", 2);
-        if (parts[0].matches("\\d+")) return Integer.parseInt(parts[0]);
-        if (parts[0].matches("\\d+[xX]")) return Integer.parseInt(parts[0].replace("x", ""));
+        if (parts[0].matches("\\d+")) {
+            return Integer.parseInt(parts[0]);
+        }
+        if (parts[0].matches("\\d+[xX]")) {
+            return Integer.parseInt(parts[0].replaceAll("[xX]", ""));
+        }
         return 1;
     }
 
     public static Optional<String> extractSet(String line) {
-        var matcher = Pattern.compile("[\\[(]([A-Za-z0-9]{2,5})[\\])]")
-                .matcher(line);
+        var matcher = Pattern.compile("[\\[(]([A-Za-z0-9]{2,5})[])]").matcher(line);
         if (!matcher.find()) {
             return Optional.empty();
         }

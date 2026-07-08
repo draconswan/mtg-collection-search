@@ -14,22 +14,34 @@ public interface CardRepository extends JpaRepository<CardEntity, UUID> {
     String CARD_WITH_ID_NOT_FOUND = "Card with id %s not found";
 
     @Query(value = """
-            SELECT *
-            FROM card c
-            WHERE lower(c.name) = lower(:card_name)
-              OR split_part(lower(c.name), ' // ', 1) = lower(:card_name)
-              OR split_part(lower(c.name), ' // ', 2) = lower(:card_name)
-              OR lower(c.flavor_name) = lower(:card_name)
-              OR split_part(lower(c.flavor_name), ' // ', 1) = lower(:card_name)
-              OR split_part(lower(c.flavor_name), ' // ', 2) = lower(:card_name)
-              OR lower(c.printed_name) = lower(:card_name)
-              OR split_part(lower(c.printed_name), ' // ', 1) = lower(:card_name)
-              OR split_part(lower(c.printed_name), ' // ', 2) = lower(:card_name)
-            ORDER BY c.set_code
-            """, nativeQuery = true)
+    WITH matched AS (
+        SELECT *
+        FROM card c
+        WHERE lower(c.name) = lower(:card_name)
+           OR split_part(lower(c.name), ' // ', 1) = lower(:card_name)
+           OR lower(c.flavor_name) = lower(:card_name)
+           OR split_part(lower(c.flavor_name), ' // ', 1) = lower(:card_name)
+           OR lower(c.printed_name) = lower(:card_name)
+           OR split_part(lower(c.printed_name), ' // ', 1) = lower(:card_name)
+    )
+    SELECT DISTINCT ON (set_code, collector_number)
+           *
+    FROM matched
+    ORDER BY
+        set_code,
+        collector_number,
+        CASE
+            WHEN lang = 'en' THEN 1
+            WHEN lang = 'ja' THEN 2
+            ELSE 3
+        END,
+        id
+    """, nativeQuery = true)
     List<CardEntity> findAllPrintingsForCardName(@Param("card_name") String card_name);
 
+
     @Query(value = """
+    WITH matched AS (
         SELECT *
         FROM card c
         WHERE lower(c.name) LIKE lower(CONCAT('%', :namePart, '%'))
@@ -41,8 +53,20 @@ public interface CardRepository extends JpaRepository<CardEntity, UUID> {
            OR lower(c.printed_name) LIKE lower(CONCAT('%', :namePart, '%'))
            OR lower(split_part(c.printed_name, ' // ', 1)) LIKE lower(CONCAT('%', :namePart, '%'))
            OR lower(split_part(c.printed_name, ' // ', 2)) LIKE lower(CONCAT('%', :namePart, '%'))
-        ORDER BY c.set_code
-        """, nativeQuery = true)
+    )
+    SELECT DISTINCT ON (set_code, collector_number)
+           *
+    FROM matched
+    ORDER BY
+        set_code,
+        collector_number,
+        CASE
+            WHEN lang = 'en' THEN 1
+            WHEN lang = 'ja' THEN 2
+            ELSE 3
+        END,
+        id
+    """, nativeQuery = true)
     List<CardEntity> findAllPrintingsByPartialName(@Param("namePart") String namePart);
 
     List<CardEntity> findByOracleId(String oracleId);

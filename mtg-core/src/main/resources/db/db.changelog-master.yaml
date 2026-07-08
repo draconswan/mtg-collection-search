@@ -47,3 +47,6 @@ databaseChangeLog:
   - include:
       file: db/release-1-0-15/db.changelog-1-0-15.yaml
       relativeToChangelogFile: false
+  - include:
+      file: db/release-1-0-16/db.changelog-1-0-16.yaml
+      relativeToChangelogFile: false

@@ -5,7 +5,7 @@ const manaSymbolCache = new Map();
  * Returns an <img> element for a mana symbol, using cache if available.
  */
 function getManaSymbolImg(symbol) {
-    const clean = symbol.toUpperCase().replace(/\//g, "-");
+    const clean = symbol.toUpperCase().replace(/\//g, "");
     const url = `https://svgs.scryfall.io/card-symbols/${clean}.svg`;
 
     if (manaSymbolCache.has(clean)) {

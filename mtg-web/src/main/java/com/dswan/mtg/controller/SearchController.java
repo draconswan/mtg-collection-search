@@ -1,12 +1,15 @@
 package com.dswan.mtg.controller;
 
 import com.dswan.mtg.domain.cards.*;
+import com.dswan.mtg.domain.entity.UserDetailsDto;
 import com.dswan.mtg.domain.model.CardStateForm;
 import com.dswan.mtg.domain.model.DeckStateForm;
 import com.dswan.mtg.dto.CardSetDTO;
 import com.dswan.mtg.service.CardProcessingService;
 import com.dswan.mtg.util.DeckProcessingUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +36,7 @@ public class SearchController {
     @PostMapping("/checklist")
     public String showChecklist(@RequestParam("cardNames") String cardNamesRaw,
                                 @RequestParam(required = false) List<String> gameTypes,
+                                @AuthenticationPrincipal UserDetailsDto userDetails,
                                 Model model) {
         List<String> selectedGameTypes = (gameTypes == null || gameTypes.isEmpty()) ? List.of("paper") : gameTypes.stream().map(String::toLowerCase).toList();
         List<String> cardNames = cardProcessingService.extractNamesOnly(cardNamesRaw);
@@ -43,7 +47,7 @@ public class SearchController {
                     return card;
                 })
                 .toList();
-        List<CardSetDTO> groupedBySet = cardProcessingService.buildChecklist(allCards, selectedGameTypes);
+        Object groupedBySet = cardProcessingService.buildChecklist(allCards, selectedGameTypes, userDetails.getUser().getSortType());
         model.addAttribute("cardSets", groupedBySet);
         model.addAttribute("cardTypes", CardType.values());
         model.addAttribute("pageTitle", "Search Checklist");
