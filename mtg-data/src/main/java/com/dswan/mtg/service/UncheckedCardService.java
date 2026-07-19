@@ -1,15 +1,12 @@
 package com.dswan.mtg.service;
 
-import com.dswan.mtg.domain.cards.Deck;
 import com.dswan.mtg.domain.cards.DeckFormats;
-import com.dswan.mtg.domain.entity.DeckEntity;
 import com.dswan.mtg.domain.mapper.DeckMapper;
 import com.dswan.mtg.dto.UncheckedCardDTO;
 import com.dswan.mtg.dto.UncheckedCardView;
 import com.dswan.mtg.repository.DeckRepository;
 import com.dswan.mtg.repository.MissingCardsRepository;
 import lombok.AllArgsConstructor;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.*;

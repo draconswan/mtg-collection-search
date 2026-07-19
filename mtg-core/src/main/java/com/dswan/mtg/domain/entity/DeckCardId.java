@@ -10,4 +10,5 @@ import java.util.UUID;
 public class DeckCardId implements Serializable {
     private UUID deckId;
     private UUID cardId;
+    private String location;
 }

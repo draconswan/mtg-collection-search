@@ -15,6 +15,7 @@ public interface MissingCardsRepository extends JpaRepository<DeckCardEntity, Lo
                 SELECT
                     ud.id AS deck_id,
                     ud.deckname AS deck_name,
+                    udc.location as deck_location,
                     c.oracle_id,
                     SUM(udc.quantity)::bigint AS missing_quantity
                 FROM user_deck_cards udc
@@ -31,7 +32,7 @@ public interface MissingCardsRepository extends JpaRepository<DeckCardEntity, Lo
                   )
                   AND (:types IS NULL OR LOWER(ud.decktype) = ANY(CAST(:types AS text[])))
                   AND c.type_line NOT ILIKE '%basic land%'
-                GROUP BY ud.id, ud.deckname, c.oracle_id
+                GROUP BY ud.id, ud.deckname, udc.location, c.oracle_id
             ),
             all_printings AS (
                 SELECT DISTINCT ON (c.oracle_id, c.set_code)
@@ -69,6 +70,7 @@ public interface MissingCardsRepository extends JpaRepository<DeckCardEntity, Lo
                 ap.type_line,
                 ap.mana_cost,
                 mpd.missing_quantity AS quantity,
+                mpd.deck_location,
                 null
             FROM missing_per_deck mpd
             JOIN all_printings ap ON ap.oracle_id = mpd.oracle_id

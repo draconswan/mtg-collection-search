@@ -22,6 +22,7 @@
     <script src="/js/mana-symbols.js" defer></script>
     <script src="/js/deck.js" defer></script>
     <script src="/js/triStateCheckbox.js" defer></script>
+    <script src="/js/card-preview.js" defer></script>
     <style>
         body {
             padding-bottom: 60px;
@@ -31,6 +32,7 @@
 <body>
 <!-- Include header -->
 <div th:replace="~{fragments/header :: body}"></div>
+<div id="card-preview" class="card-preview"></div>
 <div class="container py-4">
     <div th:if="${cardsNotFound != null and !cardsNotFound.isEmpty()}"
          class="alert alert-danger d-flex align-items-start" role="alert">
@@ -108,65 +110,123 @@
                     </button>
                 </div>
                 <div class="deck-columns">
-                    <div th:each="entryGroup : ${groupedDecklist}" class="deck-group">
-                        <h5>
-                            <span th:text="${entryGroup.key}"></span>
-                            (<span class="type-total"
-                                   th:id="'typeTotal_' + ${entryGroup.key}"
-                                   th:text="${typeQuantities[entryGroup.key]}"></span>)
-                        </h5>
-                        <div th:each="cardEntry : ${entryGroup.value}" class="card-row" th:data-type="${entryGroup.key}" th:data-index="${cardEntry.index}">
-                            <div class="card-col-checkbox">
-                                <input class="form-check-input tri-check"
-                                       type="checkbox"
-                                       th:id="'card_' + ${cardEntry.index}"
-                                       th:name="cards[__${cardEntry.index}__].checked"
-                                       th:data-checked="${cardEntry.card.checked}"
-                                       th:data-proxy="${cardEntry.card.proxy}"
-                                       th:checked="${cardEntry.card.checked}" />
+                    <div th:each="zoneEntry, iterStat : ${zonedGroups}">
+                        <h3 class="zone-header" th:text="${zoneEntry.key.displayName}"></h3>
+                        <div class="type-columns">
+                            <div th:each="typeEntry : ${zoneEntry.value}">
+                            <h5 class="my-2">
+                                <span th:text="${typeEntry.key}"></span>
+                                (<span class="type-total"
+                                       th:id="'typeTotal_' + ${typeEntry.key}"
+                                       th:text="${typeEntry.value.size()}"></span>)
+                            </h5>
+                            <div th:each="cardEntry : ${typeEntry.value}" class="card-row"
+                                 th:data-type="${typeEntry.key}" th:data-index="${cardEntry.index}">
+                                <div class="card-col-checkbox">
+                                    <input class="form-check-input tri-check"
+                                           type="checkbox"
+                                           th:id="'card_' + ${cardEntry.index}"
+                                           th:name="cards[__${cardEntry.index}__].checked"
+                                           th:data-checked="${cardEntry.card.checked}"
+                                           th:data-proxy="${cardEntry.card.proxy}"
+                                           th:checked="${cardEntry.card.checked}"/>
+                                    <input type="hidden"
+                                           class="proxy-hidden"
+                                           th:name="cards[__${cardEntry.index}__].proxy"
+                                           th:value="${cardEntry.card.proxy}"/>
+                                </div>
+                                <div class="card-col-qty">
+                                    <input type="number"
+                                           class="form-control form-control-sm quantity-input"
+                                           th:data-index="${cardEntry.index}"
+                                           th:id="'qty_' + ${cardEntry.index}"
+                                           th:data-card-id="${cardEntry.card.id}"
+                                           th:data-deck-id="${deckId}"
+                                           th:data-type="${typeEntry.key}"
+                                           min="1"
+                                           th:value="${cardEntry.quantity}"/>
+                                </div>
+                                <div class="card-col-name">
+                                    <a th:href="${cardEntry.card.scryfallUri}"
+                                       th:text="${cardEntry.card.displayName}"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="card-link"
+                                       th:attr="data-img-url=${cardEntry.card.imageUris.normal}"></a>
+                                </div>
+                                <div class="card-col-move">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary move-card-open-btn"
+                                            th:data-card-id="${cardEntry.card.id}"
+                                            th:data-card-name="${cardEntry.card.displayName}"
+                                            th:data-card-qty="${cardEntry.quantity}"
+                                            th:data-deck-id="${deckId}"
+                                            th:data-current-zone="${cardEntry.card.location}">
+                                        Move
+                                    </button>
+                                </div>
+                                <div class="card-col-delete">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger delete-card-btn"
+                                            th:data-card-id="${cardEntry.card.id}"
+                                            th:data-deck-id="${deckId}">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
                                 <input type="hidden"
-                                       class="proxy-hidden"
-                                       th:name="cards[__${cardEntry.index}__].proxy"
-                                       th:value="${cardEntry.card.proxy}" />
-                            </div>
-                            <div class="card-col-qty">
-                                <input type="number"
-                                       class="form-control form-control-sm quantity-input"
-                                       th:data-index="${cardEntry.index}"
-                                       th:id="'qty_' + ${cardEntry.index}"
-                                       th:data-card-id="${cardEntry.card.id}"
-                                       th:data-deck-id="${deckId}"
-                                       th:data-type="${entryGroup.key}"
-                                       min="1"
+                                       th:name="cards[__${cardEntry.index}__].cardId"
+                                       th:value="${cardEntry.card.id}"/>
+                                <input type="hidden"
+                                       th:name="cards[__${cardEntry.index}__].quantity"
                                        th:value="${cardEntry.quantity}"/>
+                                <input type="hidden"
+                                       th:name="cards[__${cardEntry.index}__].zone"
+                                       th:value="${cardEntry.card.location}"/>
                             </div>
-                            <div class="card-col-name">
-                                <label class="form-check-label"
-                                       th:for="'card_' + ${cardEntry.index}"
-                                       th:data-quantity="${cardEntry.quantity}"
-                                       th:data-name="${cardEntry.card.displayName}"
-                                       th:data-card-id="${cardEntry.card.id}"
-                                       th:text="${cardEntry.card.displayName}">
-                                </label>
-                            </div>
-                            <div class="card-col-delete">
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-danger delete-card-btn"
-                                        th:data-card-id="${cardEntry.card.id}"
-                                        th:data-deck-id="${deckId}">
-                                    <i class="bi bi-x-lg"></i>
-                                </button>
-                            </div>
-                            <input type="hidden"
-                                   th:name="cards[__${cardEntry.index}__].cardId"
-                                   th:value="${cardEntry.card.id}"/>
-                            <input type="hidden"
-                                   th:name="cards[__${cardEntry.index}__].quantity"
-                                   th:value="${cardEntry.quantity}"/>
                         </div>
+                        </div>
+                        <hr th:if="${!iterStat.last}" class="zone-separator">
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="moveCardModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Move Card</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="moveCardName" class="fw-bold"></p>
+                <div class="mb-3">
+                    <label class="form-label">Quantity to move</label>
+                    <input type="number" id="moveQtyInput" class="form-control"
+                           min="1" value="1">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Move to zone</label>
+                    <select id="moveZoneSelect" class="form-select">
+                        <option th:each="zone : ${deckFormat.zones}"
+                                th:value="${zone.name()}"
+                                th:text="${zone.displayName}">
+                        </option>
+                    </select>
+                </div>
+                <input type="hidden" id="moveCardId">
+                <input type="hidden" id="moveDeckId">
+                <input type="hidden" id="moveCurrentZone">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal">Cancel
+                </button>
+                <button type="button" class="btn btn-primary"
+                        id="confirmMoveBtn">Move
+                </button>
+            </div>
         </div>
     </div>
 </div>

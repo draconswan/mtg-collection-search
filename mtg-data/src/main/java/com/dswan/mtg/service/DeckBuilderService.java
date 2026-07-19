@@ -60,6 +60,7 @@ public class DeckBuilderService {
                 card.setChecked(cs.isChecked());
                 card.setProxy(cs.isProxy());
                 card.setQuantity(cs.getQuantity());
+                card.setLocation(cs.getZone());
                 cards.add(card);
             }
             deck.setCards(cards);

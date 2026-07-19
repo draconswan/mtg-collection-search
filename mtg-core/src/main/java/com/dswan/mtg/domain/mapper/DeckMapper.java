@@ -38,7 +38,7 @@ public class DeckMapper {
                         card.setQuantity(dc.getQuantity());
                         card.setChecked(dc.getChecked());
                         card.setProxy(dc.getProxy());
-                        card.setLocation(dc.getLocation());
+                        card.setLocation(dc.getId().getLocation());
                         return card;
                     })
                     .collect(Collectors.toList());
@@ -107,7 +107,6 @@ public class DeckMapper {
                                 e.setQuantity(card.getQuantity());
                                 e.setChecked(card.isChecked());
                                 e.setProxy(card.isProxy());
-                                e.setLocation(card.getLocation());
                             },
                             () -> {
                                 DeckCardEntity newCard = new DeckCardEntity();
@@ -117,12 +116,12 @@ public class DeckMapper {
                                 DeckCardId id = new DeckCardId();
                                 id.setDeckId(entity.getId());
                                 id.setCardId(cardId);
+                                id.setLocation(card.getLocation());
                                 newCard.setId(id);
 
                                 newCard.setQuantity(card.getQuantity());
                                 newCard.setChecked(card.isChecked());
                                 newCard.setProxy(card.isProxy());
-                                newCard.setLocation(card.getLocation());
 
                                 entity.getCards().add(newCard);
                             }

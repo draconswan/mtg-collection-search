@@ -8,5 +8,6 @@ import java.util.UUID;
 public class DeckCardCheckState {
     private UUID deckId;
     private UUID cardId;
+    private String zone;
     private boolean checked;
 }

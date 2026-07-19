@@ -1,8 +1,6 @@
 package com.dswan.mtg.controller;
 
-import com.dswan.mtg.domain.cards.CardEntry;
-import com.dswan.mtg.domain.cards.Deck;
-import com.dswan.mtg.domain.cards.DeckFormats;
+import com.dswan.mtg.domain.cards.*;
 import com.dswan.mtg.domain.model.CardStateForm;
 import com.dswan.mtg.domain.model.DeckStateForm;
 import com.dswan.mtg.domain.model.GlobalCheckedStateForm;
@@ -36,14 +34,22 @@ public class DeckManagementController {
     @GetMapping("/deck/{deckId}")
     public String showSavedDeck(@PathVariable String deckId, Model model) {
         Deck deck = deckService.getDeck(deckId);
+        DeckFormat format = DeckFormat.fromString(deck.getDeckType());
         AtomicInteger idx = new AtomicInteger();
         List<CardEntry> cardEntries = deck.getCards().stream()
                 .map(card -> new CardEntry(idx.getAndIncrement(), card.getQuantity(), card))
                 .toList();
-        Map<String, Integer> typeQuantities = new LinkedHashMap<>();
-        Map<String, List<CardEntry>> orderedGroups = DeckProcessingUtil.getOrderedCardGroups(cardEntries, typeQuantities);
-        int totalQuantity = typeQuantities.values().stream()
-                .mapToInt(Integer::intValue)
+        Map<DeckZone, Map<String, List<CardEntry>>> zonedGroups = new LinkedHashMap<>();
+        for (DeckZone zone : format.zones) {
+            List<CardEntry> zoneEntries = cardEntries.stream()
+                    .filter(e -> DeckZone.fromString(e.getCard().getLocation()) == zone)
+                    .toList();
+            Map<String, Integer> typeQuantities = new LinkedHashMap<>();
+            Map<String, List<CardEntry>> orderedCardGroups = DeckProcessingUtil.getOrderedCardGroups(zoneEntries, typeQuantities);
+            zonedGroups.put(zone, orderedCardGroups);
+        }
+        int totalQuantity = cardEntries.stream()
+                .mapToInt(CardEntry::getQuantity)
                 .sum();
         Long totalProxies = cardEntries.stream()
                 .filter(c -> c.getCard().isProxy())
@@ -59,11 +65,11 @@ public class DeckManagementController {
                     cardStateForm.setCardId(card.getId());
                     cardStateForm.setQuantity(card.getQuantity());
                     cardStateForm.setChecked(card.isChecked());
+                    cardStateForm.setZone(card.getLocation());
                     return cardStateForm;
                 })
                 .toList());
-        model.addAttribute("groupedDecklist", orderedGroups);
-        model.addAttribute("typeQuantities", typeQuantities);
+        model.addAttribute("zonedGroups", zonedGroups);
         model.addAttribute("totalQuantity", totalQuantity);
         model.addAttribute("totalProxies", totalProxies);
         model.addAttribute("deckName", deck.getName());
@@ -72,6 +78,7 @@ public class DeckManagementController {
         model.addAttribute("cardsNotFound", List.of());
         model.addAttribute("deckId", deckId);
         model.addAttribute("deckStateForm", form);
+        model.addAttribute("deckFormat", format);
         model.addAttribute("deckFormats", DeckFormats.FORMATS);
         return "decks/decklist";
     }
@@ -89,6 +96,7 @@ public class DeckManagementController {
                 deckService.updateDeckCardChecked(
                         entry.getDeckId(),
                         entry.getCardId(),
+                        entry.getZone(),
                         entry.isChecked()
                 )
         );

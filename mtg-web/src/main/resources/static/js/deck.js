@@ -126,6 +126,47 @@ const DeckUI = (() => {
         }
     }, 400);
 
+    const updateZoneModal = debounce(async (btn) => {
+        const cardId = btn.dataset.cardId;
+        const cardName = btn.dataset.cardName;
+        const cardQty = parseInt(btn.dataset.cardQty, 10);
+        const deckId = btn.dataset.deckId;
+        const currentZone = btn.dataset.currentZone;
+
+        // Fill modal fields
+        document.getElementById("moveCardName").textContent = cardName;
+        document.getElementById("moveQtyInput").max = cardQty;
+        document.getElementById("moveQtyInput").value = 1;
+
+        document.getElementById("moveCardId").value = cardId;
+        document.getElementById("moveDeckId").value = deckId;
+        document.getElementById("moveCurrentZone").value = currentZone;
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById("moveCardModal"));
+        modal.show();
+    })
+
+    const updateZone = debounce(async () => {
+        const cardId = document.getElementById("moveCardId").value;
+        const deckId = document.getElementById("moveDeckId").value;
+        const qty = parseInt(document.getElementById("moveQtyInput").value, 10);
+        const currentZone = document.getElementById("moveCurrentZone").value;
+        const targetZone = document.getElementById("moveZoneSelect").value;
+
+        const response = await fetch(`/api/v1/decks/${deckId}/update-zone`, {
+            method: "POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: `cardId=${encodeURIComponent(cardId)}&quantity=${encodeURIComponent(qty)}&currentZone=${encodeURIComponent(currentZone)}&targetZone=${encodeURIComponent(targetZone)}`
+        });
+
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert("Failed to move card.");
+        }
+    })
+
     function updateTotals() {
         const rows = document.querySelectorAll(".card-row");
 
@@ -172,9 +213,11 @@ const DeckUI = (() => {
         )
             .filter(cb => cb.dataset.checked !== "true")
             .map(cb => {
-                const label = document.querySelector(`label[for="${cb.id}"]`);
-                return `${label.dataset.quantity} ${label.dataset.name}`;
-            });
+                const row = cb.closest('.card-row');
+                const qty = row.querySelector('.quantity-input').value;
+                const name = row.querySelector('.card-link').textContent;
+                return `${qty} ${name}`;
+            })
 
         if (unchecked.length === 0) {
             alert("There are no unchecked cards to send.");
@@ -258,6 +301,12 @@ const DeckUI = (() => {
         document.querySelectorAll(".quantity-input").forEach(input => {
             input.addEventListener("input", () => updateQuantity(input));
         });
+
+        document.querySelectorAll(".move-card-open-btn").forEach(btn => {
+            btn.addEventListener("click", () => updateZoneModal(btn));
+        })
+
+        document.getElementById("confirmMoveBtn").addEventListener("click", () => updateZone());
 
         const searchInput = document.getElementById("cardSearch");
         const resultsBox = document.getElementById("cardSearchResults");

@@ -279,14 +279,23 @@ table.collapsed tbody {
     justify-content: flex-end;
 }
 
-.deck-columns {
+.type-columns {
     column-count: 2;
     column-gap: 2rem;
+}
+
+.type-columns > div {
+    break-inside: avoid;
 }
 
 .deck-group {
     break-inside: avoid;
     margin-bottom: 1.5rem;
+}
+
+.card-row {
+    display: flex;
+    width: 100%;
 }
 
 /* Mobile fallback */

@@ -89,10 +89,7 @@
     </div>
     <div th:each="deck : ${decks}" class="decklist mb-2">
         <div class="deck-header d-flex justify-content-between align-items-center">
-            <div class="deck-toggle d-flex align-items-center"
-                 data-bs-toggle="collapse"
-                 th:attr="data-bs-target='#deckCollapse__' + ${deck.id}"
-                 style="cursor: pointer;">
+            <div class="d-flex align-items-center">
                 <h2 class="h5 mb-0">
                     <span th:text="${deck.name}"></span>
                     <span class="badge ms-2"

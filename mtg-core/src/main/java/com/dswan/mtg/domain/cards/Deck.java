@@ -80,4 +80,31 @@ public class Deck implements HasDeckColors, HasDeckType {
                 .sorted(new CardColorComparator())
                 .toList();
     }
+
+    public Optional<Card> getCard(String cardId) {
+        if (cards == null) return Optional.empty();
+        return cards.stream()
+                .filter(c -> c.getId().equals(cardId))
+                .findFirst();
+    }
+
+    public Optional<Card> findCardInZone(String cardId, DeckZone zone) {
+        if (cards == null) return Optional.empty();
+        return cards.stream()
+                .filter(c -> c.getId().equals(cardId) && DeckZone.fromString(c.getLocation()) == zone)
+                .findFirst();
+    }
+
+    public void addCard(Card card) {
+        if (cards == null) {
+            cards = new ArrayList<>();
+        }
+        cards.add(card);
+    }
+
+    public void removeCard(Card card) {
+        if (cards != null) {
+            cards.remove(card);
+        }
+    }
 }

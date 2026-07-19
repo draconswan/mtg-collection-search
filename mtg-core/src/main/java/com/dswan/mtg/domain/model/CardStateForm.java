@@ -8,4 +8,5 @@ public class CardStateForm {
     private int quantity;
     private boolean checked;
     private boolean proxy;
+    private String zone;
 }

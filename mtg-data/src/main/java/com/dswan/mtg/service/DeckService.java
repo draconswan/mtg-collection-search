@@ -1,6 +1,7 @@
 package com.dswan.mtg.service;
 
 import com.dswan.mtg.domain.cards.Deck;
+import com.dswan.mtg.domain.cards.DeckZone;
 import com.dswan.mtg.domain.entity.*;
 import com.dswan.mtg.domain.mapper.DeckMapper;
 import com.dswan.mtg.dto.DeckSummaryView;
@@ -88,7 +89,7 @@ public class DeckService {
     }
 
     @Transactional
-    public boolean removeCardFromDeck(String deckId, String cardId) {
+    public boolean removeCardFromDeck(String deckId, String cardId, String zone) {
         try {
             DeckEntity deck = deckRepository.findById(UUID.fromString(deckId))
                     .orElseThrow(() -> new RuntimeException(String.format(DECK_WITH_ID_NOT_FOUND, deckId)));
@@ -97,6 +98,7 @@ public class DeckService {
             DeckCardId deckCardId = new DeckCardId();
             deckCardId.setDeckId(UUID.fromString(deckId));
             deckCardId.setCardId(UUID.fromString(cardId));
+            deckCardId.setLocation(DeckZone.fromString(zone).name().toLowerCase());
             DeckCardEntity deckCardEntity = deckCardRepository.findById(deckCardId).orElse(null);
             if (deckCardEntity == null) {
                 return false;
@@ -111,7 +113,7 @@ public class DeckService {
     }
 
     @Transactional
-    public boolean addCardToDeck(String deckId, String cardId) {
+    public boolean addCardToDeck(String deckId, String cardId, String zone) {
         try {
             DeckEntity deck = deckRepository.findById(UUID.fromString(deckId))
                     .orElseThrow(() -> new RuntimeException(String.format(DECK_WITH_ID_NOT_FOUND, deckId)));
@@ -120,6 +122,7 @@ public class DeckService {
             DeckCardId deckCardId = new DeckCardId();
             deckCardId.setDeckId(UUID.fromString(deckId));
             deckCardId.setCardId(UUID.fromString(cardId));
+            deckCardId.setLocation(DeckZone.fromNullableString(zone).name().toLowerCase());
             DeckCardEntity deckCardEntity = deckCardRepository.findById(deckCardId).orElse(null);
             if (deckCardEntity == null) {
                 deckCardEntity = new DeckCardEntity();
@@ -128,7 +131,6 @@ public class DeckService {
                 deckCardEntity.setQuantity(1);
                 deckCardEntity.setId(deckCardId);
                 deckCardEntity.setChecked(false);
-                deckCardEntity.setLocation("mainboard");
                 deckCardRepository.save(deckCardEntity);
             }
         } catch (Exception ex) {
@@ -139,7 +141,7 @@ public class DeckService {
     }
 
     @Transactional
-    public boolean updateDeckCardQuantity(String deckId, String cardId, Integer newQuantity) {
+    public boolean updateDeckCardQuantity(String deckId, String cardId, Integer newQuantity, String zone) {
         try {
             deckRepository.findById(UUID.fromString(deckId))
                     .orElseThrow(() -> new RuntimeException(String.format(DECK_WITH_ID_NOT_FOUND, deckId)));
@@ -148,6 +150,7 @@ public class DeckService {
             DeckCardId deckCardId = new DeckCardId();
             deckCardId.setDeckId(UUID.fromString(deckId));
             deckCardId.setCardId(UUID.fromString(cardId));
+            deckCardId.setLocation(DeckZone.fromString(zone).name().toLowerCase());
             DeckCardEntity deckCardEntity = deckCardRepository.findById(deckCardId)
                     .orElseThrow(() -> new RuntimeException(String.format("Card with id %s not found in deck with id %s", cardId, deckId)));
             deckCardEntity.setQuantity(newQuantity);
@@ -160,7 +163,7 @@ public class DeckService {
     }
 
     @Transactional
-    public boolean updateDeckCardChecked(UUID deckId, UUID cardId, Boolean checked) {
+    public boolean updateDeckCardChecked(UUID deckId, UUID cardId, String zone, Boolean checked) {
         try {
             deckRepository.findById(deckId)
                     .orElseThrow(() -> new RuntimeException(String.format(DECK_WITH_ID_NOT_FOUND, deckId)));
@@ -169,6 +172,7 @@ public class DeckService {
             DeckCardId deckCardId = new DeckCardId();
             deckCardId.setDeckId(deckId);
             deckCardId.setCardId(cardId);
+            deckCardId.setLocation(DeckZone.fromString(zone).name().toLowerCase());
             DeckCardEntity deckCardEntity = deckCardRepository.findById(deckCardId)
                     .orElseThrow(() -> new RuntimeException(String.format("Card with id %s not found in deck with id %s", cardId, deckId)));
             deckCardEntity.setChecked(checked);
@@ -178,6 +182,64 @@ public class DeckService {
             return false;
         }
         return true;
+    }
+
+    @Transactional
+    public boolean moveCard(String deckId, String cardId, int quantity, String currentZoneRaw, String targetZoneRaw) {
+        try {
+            UUID deckUUID = UUID.fromString(deckId);
+            UUID cardUUID = UUID.fromString(cardId);
+            DeckEntity deck = deckRepository.findById(deckUUID).orElseThrow(() -> new RuntimeException(String.format(DECK_WITH_ID_NOT_FOUND, deckId)));
+            CardEntity card = cardRepository.findById(cardUUID).orElseThrow(() -> new RuntimeException(String.format(CARD_WITH_ID_NOT_FOUND, cardId)));
+            DeckZone targetZone = DeckZone.fromString(targetZoneRaw);
+            DeckZone currentZone = DeckZone.fromString(currentZoneRaw);
+            DeckCardId currentId = new DeckCardId();
+            currentId.setDeckId(deckUUID);
+            currentId.setCardId(cardUUID);
+            currentId.setLocation(currentZone.name().toLowerCase());
+            DeckCardEntity source = deckCardRepository.findById(currentId).orElseThrow(() -> new RuntimeException(String.format("Card %s not found in deck %s", cardId, deckId)));
+            int currentQty = source.getQuantity();
+            if (quantity < 1 || quantity > currentQty) {
+                throw new IllegalArgumentException("Invalid quantity to move");
+            }
+            // Subtract from original
+            source.setQuantity(currentQty - quantity);
+            // Find existing entry in target zone
+            DeckCardId targetId = new DeckCardId();
+            targetId.setDeckId(deckUUID);
+            targetId.setCardId(cardUUID);
+            targetId.setLocation(targetZone.name().toLowerCase());
+            DeckCardEntity existingTarget = deckCardRepository.findById(targetId).orElse(null);
+            if (existingTarget != null) {
+                // Merge quantities
+                existingTarget.setQuantity(existingTarget.getQuantity() + quantity);
+                deckCardRepository.save(existingTarget);
+            } else {
+                // Create new DeckCardEntity in target zone
+                DeckCardEntity newEntry = new DeckCardEntity();
+                DeckCardId newId = new DeckCardId();
+                newId.setDeckId(deckUUID);
+                newId.setCardId(cardUUID);
+                newId.setLocation(targetZone.name().toLowerCase());
+                newEntry.setId(newId);
+                newEntry.setDeckEntity(deck);
+                newEntry.setCard(card);
+                newEntry.setQuantity(quantity);
+                newEntry.setChecked(source.getChecked());
+                newEntry.setProxy(source.getProxy());
+                deckCardRepository.save(newEntry);
+            }
+            // Remove original if empty
+            if (source.getQuantity() == 0) {
+                deckCardRepository.delete(source);
+            } else {
+                deckCardRepository.save(source);
+            }
+            return true;
+        } catch (Exception ex) {
+            log.error("Failed to move card {} in deck {}: {}", cardId, deckId, ex.getMessage());
+            return false;
+        }
     }
 
     public List<UserLandGroupReportDto> getLandAuditForUser(Long userId) {

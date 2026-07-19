@@ -60,27 +60,36 @@ public class SearchController {
         Tuple<List<CardEntry>, List<String>> cardEntriesAndErrors = cardProcessingService.buildDecklist(cardNamesRaw);
         List<CardEntry> cardEntries = cardEntriesAndErrors._1();
         List<String> cardsNotFound = cardEntriesAndErrors._2();
+        Map<DeckZone, Map<String, List<CardEntry>>> zonedGroups = new LinkedHashMap<>();
         Map<String, Integer> typeQuantities = new LinkedHashMap<>();
-        Map<String, List<CardEntry>> orderedGroups = DeckProcessingUtil.getOrderedCardGroups(cardEntries, typeQuantities);
-        int totalQuantity = typeQuantities.values().stream()
-                .mapToInt(Integer::intValue)
+        Map<String, List<CardEntry>> orderedCardGroups = DeckProcessingUtil.getOrderedCardGroups(cardEntries, typeQuantities);
+        zonedGroups.put(DeckZone.MAINBOARD, orderedCardGroups);
+        int totalQuantity = cardEntries.stream()
+                .mapToInt(CardEntry::getQuantity)
                 .sum();
+        Long totalProxies = cardEntries.stream()
+                .filter(c -> c.getCard().isProxy())
+                .count();
         DeckStateForm form = new DeckStateForm();
-        form.setCards(cardEntries.stream().map(cardEntry -> {
-                            CardStateForm cardStateForm = new CardStateForm();
-                            cardStateForm.setCardId(cardEntry.getCard().getId());
-                            cardStateForm.setQuantity(cardEntry.getQuantity());
-                            cardStateForm.setChecked(false);
-                            return cardStateForm;
-                        })
-                        .toList()
+        form.setCards(cardEntries
+                .stream()
+                .map(cardEntry -> {
+                    CardStateForm cardStateForm = new CardStateForm();
+                    cardStateForm.setCardId(cardEntry.getCard().getId());
+                    cardStateForm.setQuantity(cardEntry.getQuantity());
+                    cardStateForm.setChecked(false);
+                    cardStateForm.setZone(DeckZone.MAINBOARD.name().toLowerCase());
+                    return cardStateForm;
+                })
+                .toList()
         );
-        model.addAttribute("groupedDecklist", orderedGroups);
-        model.addAttribute("typeQuantities", typeQuantities);
+        model.addAttribute("zonedGroups", zonedGroups);
         model.addAttribute("totalQuantity", totalQuantity);
-        model.addAttribute("pageTitle", "Decklist");
+        model.addAttribute("totalProxies", totalProxies);
+        model.addAttribute("pageTitle", "New Decklist");
         model.addAttribute("cardsNotFound", cardsNotFound);
         model.addAttribute("deckStateForm", form);
+        model.addAttribute("deckFormat", DeckFormat.DEFAULT);
         model.addAttribute("deckFormats", DeckFormats.FORMATS);
         return "decks/decklist";
     }

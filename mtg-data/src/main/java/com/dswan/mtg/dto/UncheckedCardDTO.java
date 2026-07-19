@@ -33,6 +33,7 @@ public class UncheckedCardDTO {
     private String typeLine;
     private String manaCost;
     private Long quantity;
+    private String location;
 
     //Derived Fields
     @Transient
