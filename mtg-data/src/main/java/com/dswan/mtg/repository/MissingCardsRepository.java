@@ -5,9 +5,12 @@ import com.dswan.mtg.domain.entity.DeckCardEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
+@Repository
 public interface MissingCardsRepository extends JpaRepository<DeckCardEntity, Long> {
 
     @Query(value = """
@@ -31,6 +34,7 @@ public interface MissingCardsRepository extends JpaRepository<DeckCardEntity, Lo
                         AND udc2.checked = true
                   )
                   AND (:types IS NULL OR LOWER(ud.decktype) = ANY(CAST(:types AS text[])))
+                  AND (CAST(:deckIds as uuid[]) IS NULL OR ud.id = ANY(CAST(:deckIds as uuid[])))
                   AND c.type_line NOT ILIKE '%basic land%'
                 GROUP BY ud.id, ud.deckname, udc.location, c.oracle_id
             ),
@@ -94,6 +98,7 @@ public interface MissingCardsRepository extends JpaRepository<DeckCardEntity, Lo
                                 AND udc2.checked = true
                           )
                           AND (:types IS NULL OR LOWER(ud.decktype) = ANY(CAST(:types AS text[])))
+                          AND (CAST(:deckIds as uuid[]) IS NULL OR ud.id = ANY(CAST(:deckIds as uuid[])))
                           AND c.type_line NOT ILIKE '%basic land%'
                         GROUP BY ud.id, c.oracle_id
                     )
@@ -104,6 +109,7 @@ public interface MissingCardsRepository extends JpaRepository<DeckCardEntity, Lo
     )
     List<UncheckedCardDTO> findAllUncheckedCardsForUser(
             @Param("userId") Long userId,
-            @Param("types") String[] types
+            @Param("types") String[] types,
+            @Param("deckIds") UUID[] deckIds
     );
 }

@@ -1,9 +1,9 @@
 package com.dswan.mtg.controller;
 
-import com.dswan.mtg.domain.cards.Card;
-import com.dswan.mtg.domain.cards.CardEntry;
 import com.dswan.mtg.domain.cards.Deck;
-import com.dswan.mtg.domain.cards.DeckZone;
+import com.dswan.mtg.domain.entity.CardEntity;
+import com.dswan.mtg.domain.entity.DeckCardEntity;
+import com.dswan.mtg.repository.CardRepository;
 import com.dswan.mtg.service.DeckService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @RestController
@@ -20,6 +19,7 @@ import java.util.UUID;
 public class DeckController {
 
     private final DeckService deckService;
+    private final CardRepository cardRepository;
 
     @GetMapping
     public ResponseEntity<List<Deck>> getDecksForUser(@RequestParam Long userId) {
@@ -87,5 +87,14 @@ public class DeckController {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.status(400).body("Failed to move card");
+    }
+
+    @PostMapping("/{deckId}/update-checked-existing")
+    public ResponseEntity<Boolean> updateCheckedExisting(@PathVariable UUID deckId,
+                                                         @RequestParam UUID cardId,
+                                                         @RequestParam String zone,
+                                                         @RequestParam Integer quantity) {
+        boolean success = deckService.updateDeckCardCheckedAny(deckId, cardId, zone, quantity);
+        return ResponseEntity.ok(success);
     }
 }

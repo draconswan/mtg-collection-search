@@ -63,7 +63,7 @@ const DeckUI = (() => {
         const response = await fetch(`/api/v1/decks/${deckId}/add-card`, {
             method: "POST",
             headers: {"Content-Type": "application/x-www-form-urlencoded"},
-            body: `cardId=${encodeURIComponent(selectedCardId)}`
+            body: `cardId=${encodeURIComponent(selectedCardId)}&zone=mainboard`
         });
 
         if (response.ok) {
@@ -80,11 +80,12 @@ const DeckUI = (() => {
     async function deleteCard(btn) {
         const cardId = btn.dataset.cardId;
         const deckId = btn.dataset.deckId;
+        const zone = btn.dataset.zone;
 
         const response = await fetch(`/api/v1/decks/${deckId}/remove-card`, {
             method: "POST",
             headers: {"Content-Type": "application/x-www-form-urlencoded"},
-            body: `cardId=${encodeURIComponent(cardId)}`
+            body: `cardId=${encodeURIComponent(cardId)}&zone=${zone}`
         });
 
         if (response.ok) {
@@ -100,13 +101,14 @@ const DeckUI = (() => {
     const updateQuantity = debounce(async (input) => {
         const cardId = input.dataset.cardId;
         const deckId = input.dataset.deckId;
+        const zone = input.dataset.zone;
         const index = input.dataset.index;
         const quantity = parseInt(input.value, 10);
 
         const response = await fetch(`/api/v1/decks/${deckId}/update-quantity`, {
             method: "POST",
             headers: {"Content-Type": "application/x-www-form-urlencoded"},
-            body: `cardId=${encodeURIComponent(cardId)}&quantity=${encodeURIComponent(quantity)}`
+            body: `cardId=${encodeURIComponent(cardId)}&quantity=${encodeURIComponent(quantity)}&zone=${zone}`
         });
 
         if (response.ok) {

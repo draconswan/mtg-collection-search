@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Controller
 @AllArgsConstructor
@@ -88,19 +90,6 @@ public class DeckManagementController {
         Deck deck = deckBuilderService.buildDeck(form);
         Deck saved = deckService.saveDeck(deck);
         return "redirect:/user/deck/" + saved.getId();
-    }
-
-    @PostMapping("/decks/update-all")
-    public String updateAllChecked(@ModelAttribute GlobalCheckedStateForm form) {
-        form.getCards().forEach(entry ->
-                deckService.updateDeckCardChecked(
-                        entry.getDeckId(),
-                        entry.getCardId(),
-                        entry.getZone(),
-                        entry.isChecked()
-                )
-        );
-        return "redirect:/user/decks/all-missing";
     }
 
     @RequestMapping(value = "/deck/{deckId}/delete", method = {RequestMethod.GET, RequestMethod.DELETE})

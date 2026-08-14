@@ -10,7 +10,7 @@ public class BulkDataItem {
     private String id;
     private String type;
     private String name;
-    @JsonProperty("download_uri")
+    @JsonProperty("jsonl_download_uri")
     private String downloadUri;
     @JsonProperty("updated_at")
     private Instant updatedAt;

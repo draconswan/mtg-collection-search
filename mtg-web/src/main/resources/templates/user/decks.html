@@ -57,6 +57,32 @@
                     window.location.href = "/user/decks/all-missing?" + params.toString();
                 });
             }
+            // Selected Deck Audit
+            const checkboxes = document.querySelectorAll(".deck-select-checkbox");
+            const auditBtn = document.getElementById("runSelectedAuditBtn");
+            if (auditBtn) {
+                auditBtn.addEventListener("click", () => {
+                    const selected = Array.from(document.querySelectorAll(".deck-select-checkbox"))
+                        .filter(cb => cb.checked)
+                        .map(cb => cb.value);
+
+                    const params = new URLSearchParams();
+                    selected.forEach(deckId => params.append("deckIds", deckId));
+
+                    window.location.href = "/user/decks/all-missing?" + params.toString();
+                });
+            }
+
+            function updateButtonState() {
+                const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+                auditBtn.disabled = !anyChecked;
+            }
+
+            checkboxes.forEach(cb => {
+                cb.addEventListener("change", updateButtonState);
+            });
+            updateButtonState();
+            //Delete Deck Chicken Assertion
             const modal = new bootstrap.Modal(document.getElementById("deleteDeckModal"));
             const message = document.getElementById("deleteDeckMessage");
             const confirmBtn = document.getElementById("confirmDeleteDeckBtn");
@@ -91,7 +117,12 @@
         <div class="deck-header d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
                 <h2 class="h5 mb-0">
-                    <span th:text="${deck.name}"></span>
+                    <label>
+                        <input type="checkbox"
+                               class="deck-select-checkbox"
+                               th:value="${deck.id}"/>
+                        <span th:text="${deck.name}"></span>
+                    </label>
                     <span class="badge ms-2"
                           th:classappend="${deck.badgeClass}">
                         <span th:text="${deck.totalCards}"></span> cards
@@ -192,7 +223,16 @@
     <div class="container d-flex justify-content-between align-items-center">
         <h6 class="text-muted" id="deckCount" th:text="'Number of decks: ' + ${deckCount}"></h6>
         <div>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#deckTypeModal">
+            <button type="button"
+                    class="btn btn-primary"
+                    id="runSelectedAuditBtn"
+                    disabled>
+                <i class="bi bi-table"></i> Audit Selected
+            </button>
+            <button type="button"
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#deckTypeModal">
                 <i class="bi bi-table"></i> Missing Audit
             </button>
             <a th:href="@{/user/decks/land-audit}" class="btn btn-primary">

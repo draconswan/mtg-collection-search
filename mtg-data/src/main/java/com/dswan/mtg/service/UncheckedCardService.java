@@ -7,6 +7,7 @@ import com.dswan.mtg.dto.UncheckedCardView;
 import com.dswan.mtg.repository.DeckRepository;
 import com.dswan.mtg.repository.MissingCardsRepository;
 import lombok.AllArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -22,11 +23,12 @@ public class UncheckedCardService {
 
     public Map<String, List<UncheckedCardView>> getUncheckedCardsGroupedBySet(Long userId,
                                                                               List<String> types,
+                                                                              List<UUID> deckIds,
                                                                               int page,
                                                                               int size,
                                                                               AtomicReference<Integer> totalPagesRef) {
         // 1. Load all rows (your existing logic)
-        Map<String, List<UncheckedCardView>> grouped = getUncheckedCardsGroupedBySet(userId, types);
+        Map<String, List<UncheckedCardView>> grouped = getUncheckedCardsGroupedBySet(userId, types, deckIds);
 
         // 2. Extract ordered set codes
         List<String> setCodes = new ArrayList<>(grouped.keySet());
@@ -50,7 +52,7 @@ public class UncheckedCardService {
     }
 
 
-    public Map<String, List<UncheckedCardView>> getUncheckedCardsGroupedBySet(Long userId, List<String> types) {
+    public Map<String, List<UncheckedCardView>> getUncheckedCardsGroupedBySet(Long userId, List<String> types, List<UUID> deckIds) {
         if (types == null || types.isEmpty()) {
             types = DeckFormats.FORMATS.values()
                     .stream()
@@ -62,7 +64,9 @@ public class UncheckedCardService {
                     .map(t -> t.toLowerCase().replace(" ", "_"))
                     .toList();
         }
-        List<UncheckedCardDTO> rows = missingCardsRepository.findAllUncheckedCardsForUser(userId, types.toArray(new String[0]));
+        String[] typesArray = types.toArray(new String[0]);
+        UUID[] decksArray = !CollectionUtils.isEmpty(deckIds) ? deckIds.toArray(new UUID[0]) : null;
+        List<UncheckedCardDTO> rows = missingCardsRepository.findAllUncheckedCardsForUser(userId, typesArray, decksArray);
         rows.forEach(UncheckedCardDTO::hydrateFromEntity);
         Map<UUID, List<String>> deckColorsCache = new HashMap<>();
         List<UncheckedCardView> wrapped = rows.stream()

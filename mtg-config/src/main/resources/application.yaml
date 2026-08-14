@@ -6,6 +6,7 @@ mtg:
       - ph
   api:
     refreshEndpoint: http://localhost:8080/api/v1/refresh
+  sync-on-login: false
 server:
   servlet:
     session:

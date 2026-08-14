@@ -4,14 +4,12 @@ import com.dswan.mtg.domain.model.HasDeckColors;
 import com.dswan.mtg.domain.model.HasDeckType;
 import com.dswan.mtg.util.CardColorComparator;
 import lombok.Data;
-import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 @Data

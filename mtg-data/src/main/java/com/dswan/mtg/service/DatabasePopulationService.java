@@ -2,7 +2,7 @@ package com.dswan.mtg.service;
 
 import com.dswan.mtg.client.ScryfallBulkDataWebClientService;
 import com.dswan.mtg.config.MTGProperties;
-import com.dswan.mtg.domain.DataVersion;
+import com.dswan.mtg.domain.entity.DataVersionEntity;
 import com.dswan.mtg.domain.cards.Card;
 import com.dswan.mtg.domain.entity.CardEntity;
 import com.dswan.mtg.domain.mapper.CardMapper;
@@ -14,7 +14,6 @@ import com.dswan.mtg.repository.DataVersionRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import tools.jackson.core.JsonParser;
@@ -32,14 +31,13 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
 @Slf4j
 public class DatabasePopulationService {
     private static final String ALL_CARDS = "All Cards";
-    private static final File BULK_FILE = new File("data/scryfall-all-cards.json");
+    private static final File BULK_FILE = new File("data/scryfall-all-cards.jsonl.gz");
 
     private final ScryfallBulkDataWebClientService scryfallBulkDataWebClientService;
     private final DataVersionRepository dataVersionRepository;
@@ -67,15 +65,15 @@ public class DatabasePopulationService {
         boolean success = false;
 
         try {
-            List<DataVersion> all = (List<DataVersion>) dataVersionRepository.findAll();
+            List<DataVersionEntity> all = (List<DataVersionEntity>) dataVersionRepository.findAll();
             log.info("Last Database Update: {}", all);
             LocalDateTime dataNeedsRefresh = LocalDateTime.now().minusDays(1);
 
-            DataVersion version = CollectionUtils.isEmpty(all) ? new DataVersion() : all.getFirst();
+            DataVersionEntity version = CollectionUtils.isEmpty(all) ? new DataVersionEntity() : all.getFirst();
             if (version.getId() == null) {
                 version.setId(UUID.randomUUID().toString());
             }
-            if (forceUpdate || version.getLast_refresh() == null || version.getLast_refresh().isBefore(dataNeedsRefresh)) {
+            if (forceUpdate || version.getLastRefresh() == null || version.getLastRefresh().isBefore(dataNeedsRefresh)) {
                 ObjectReader cardReader = objectMapper.readerFor(Card.class);
                 BulkDataResponse bulkDataResponse = scryfallBulkDataWebClientService.getBulkDataURLs();
                 log.info("Bulk Data info: {}", bulkDataResponse);
@@ -107,22 +105,16 @@ public class DatabasePopulationService {
                             messagingTemplate.convertAndSend("/topic/refresh-status", new StatusMessage("File downloaded"));
                         }
 
-                        try (InputStream inputStream = Files.newInputStream(BULK_FILE.toPath());
-                             JsonParser parser = objectMapper.createParser(inputStream)) {
-
-                            if (parser.nextToken() != JsonToken.START_ARRAY) {
-                                throw new IllegalStateException("Expected JSON array at root");
-                            }
-                            if (parser.nextToken() != JsonToken.START_OBJECT) {
-                                throw new IllegalStateException("Expected object inside array");
-                            }
+                        try (InputStream fileStream = Files.newInputStream(BULK_FILE.toPath());
+                             InputStream gzipStream = new java.util.zip.GZIPInputStream(fileStream);
+                             java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(gzipStream))) {
 
                             int batchSize = 1000;
                             List<CardEntity> batch = new ArrayList<>();
-                            MappingIterator<Card> it = cardReader.readValues(parser);
+                            String line;
 
-                            while (it.hasNextValue()) {
-                                Card card = it.nextValue();
+                            while ((line = reader.readLine()) != null) {
+                                Card card = objectMapper.readValue(line, Card.class);
                                 card.populateFromJSON();
                                 if (!mtgProperties.ingest().languages().contains(String.valueOf(card.getLang()).toLowerCase())) {
                                     continue;
@@ -150,7 +142,7 @@ public class DatabasePopulationService {
                                 );
                             }
                             log.info("Finished processing {} cards total.", count);
-                            version.setLast_refresh(LocalDateTime.now());
+                            version.setLastRefresh(LocalDateTime.now());
                             dataVersionRepository.save(version);
                             success = true;
                         }

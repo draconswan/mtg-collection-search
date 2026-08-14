@@ -9,6 +9,7 @@ import com.dswan.mtg.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,8 @@ public class DeckService {
     private final DeckCardRepository deckCardRepository;
     private final UserRepository userRepository;
     private final LandGroupReportRepository landGroupReportRepository;
+    private final UserCardCollectionRepository userCardCollectionRepository;
+    private final UserCardDeckAssignmentRepository userCardDeckAssignmentRepository;
 
     @Transactional
     public Deck saveDeck(Deck deck) {
@@ -45,6 +48,24 @@ public class DeckService {
         // Sync cards safely
         DeckMapper.syncCards(entity, deck);
         deckRepository.save(entity);
+        // Sync checked cards with user collection
+        for (DeckCardEntity dc : entity.getCards()) {
+            if (Boolean.TRUE.equals(dc.getChecked()) && !Boolean.TRUE.equals(dc.getProxy())) {
+                // Ensure collection entry exists
+                var collection = getOrCreateCollection(entity.getUser(), dc.getCard());
+                // Increase owned quantity if needed
+                if (collection.getQuantity() < dc.getQuantity()) {
+                    collection.setQuantity(dc.getQuantity());
+                    userCardCollectionRepository.save(collection);
+                }
+                // Sync assignment quantity
+                adjustAssignment(collection.getId(), entity.getId(), dc.getQuantity());
+            } else if (dc.getProxy()) {
+                // If the card is now proxied, remove any existing assignment
+                var collectionOpt = userCardCollectionRepository.findByUserAndCard(entity.getUser(), dc.getCard());
+                collectionOpt.ifPresent(collection -> adjustAssignment(collection.getId(), entity.getId(), -dc.getQuantity()));
+            }
+        }
         return DeckMapper.toDomain(entity);
     }
 
@@ -85,7 +106,17 @@ public class DeckService {
             log.warn(String.format(DECK_WITH_ID_NOT_FOUND, id));
             return;
         }
-        deckRepository.deleteById(UUID.fromString(id));
+        var deckUUID = UUID.fromString(id);
+        var deck = deckRepository.findById(deckUUID).orElse(null);
+        if (deck != null) {
+            for (DeckCardEntity dc : deck.getCards()) {
+                if (Boolean.TRUE.equals(dc.getChecked()) && !Boolean.TRUE.equals(dc.getProxy())) {
+                    var collection = getOrCreateCollection(deck.getUser(), dc.getCard());
+                    adjustAssignment(collection.getId(), deckUUID, -dc.getQuantity());
+                }
+            }
+        }
+        deckRepository.deleteById(deckUUID);
     }
 
     @Transactional
@@ -103,8 +134,13 @@ public class DeckService {
             if (deckCardEntity == null) {
                 return false;
             }
+            Integer delta = deckCardEntity.getQuantity();
             deck.getCards().remove(deckCardEntity);
             deckRepository.save(deck);
+            if (Boolean.TRUE.equals(deckCardEntity.getChecked()) && !Boolean.TRUE.equals(deckCardEntity.getProxy())) {
+                var collection = getOrCreateCollection(deck.getUser(), deckCardEntity.getCard());
+                adjustAssignment(collection.getId(), deck.getId(), delta);
+            }
         } catch (Exception ex) {
             log.warn("Failed to remove card {} from deck {}", cardId, deckId, ex);
             return false;
@@ -132,6 +168,10 @@ public class DeckService {
                 deckCardEntity.setId(deckCardId);
                 deckCardEntity.setChecked(false);
                 deckCardRepository.save(deckCardEntity);
+                if (Boolean.TRUE.equals(deckCardEntity.getChecked()) && !Boolean.TRUE.equals(deckCardEntity.getProxy())) {
+                    var collection = getOrCreateCollection(deck.getUser(), deckCardEntity.getCard());
+                    adjustAssignment(collection.getId(), deck.getId(), 1);
+                }
             }
         } catch (Exception ex) {
             log.warn("Failed to add card {} to deck {}", cardId, deckId, ex);
@@ -143,18 +183,25 @@ public class DeckService {
     @Transactional
     public boolean updateDeckCardQuantity(String deckId, String cardId, Integer newQuantity, String zone) {
         try {
-            deckRepository.findById(UUID.fromString(deckId))
+            UUID deckUUID = UUID.fromString(deckId);
+            DeckEntity deckEntity = deckRepository.findById(deckUUID)
                     .orElseThrow(() -> new RuntimeException(String.format(DECK_WITH_ID_NOT_FOUND, deckId)));
-            cardRepository.findById(UUID.fromString(cardId))
+            UUID cardUUID = UUID.fromString(cardId);
+            cardRepository.findById(cardUUID)
                     .orElseThrow(() -> new RuntimeException(String.format(CARD_WITH_ID_NOT_FOUND, cardId)));
             DeckCardId deckCardId = new DeckCardId();
-            deckCardId.setDeckId(UUID.fromString(deckId));
-            deckCardId.setCardId(UUID.fromString(cardId));
+            deckCardId.setDeckId(deckUUID);
+            deckCardId.setCardId(cardUUID);
             deckCardId.setLocation(DeckZone.fromString(zone).name().toLowerCase());
             DeckCardEntity deckCardEntity = deckCardRepository.findById(deckCardId)
                     .orElseThrow(() -> new RuntimeException(String.format("Card with id %s not found in deck with id %s", cardId, deckId)));
+            int oldQuantity = deckCardEntity.getQuantity();
             deckCardEntity.setQuantity(newQuantity);
             deckCardRepository.save(deckCardEntity);
+            if (Boolean.TRUE.equals(deckCardEntity.getChecked()) && !Boolean.TRUE.equals(deckCardEntity.getProxy())) {
+                var collection = getOrCreateCollection(deckEntity.getUser(), deckCardEntity.getCard());
+                adjustAssignment(collection.getId(), deckEntity.getId(), newQuantity - oldQuantity);
+            }
         } catch (Exception ex) {
             log.warn("Failed to update card quantity for card {} in deck {}", cardId, deckId, ex);
             return false;
@@ -165,7 +212,7 @@ public class DeckService {
     @Transactional
     public boolean updateDeckCardChecked(UUID deckId, UUID cardId, String zone, Boolean checked) {
         try {
-            deckRepository.findById(deckId)
+            DeckEntity deckEntity = deckRepository.findById(deckId)
                     .orElseThrow(() -> new RuntimeException(String.format(DECK_WITH_ID_NOT_FOUND, deckId)));
             cardRepository.findById(cardId)
                     .orElseThrow(() -> new RuntimeException(String.format(CARD_WITH_ID_NOT_FOUND, cardId)));
@@ -177,6 +224,17 @@ public class DeckService {
                     .orElseThrow(() -> new RuntimeException(String.format("Card with id %s not found in deck with id %s", cardId, deckId)));
             deckCardEntity.setChecked(checked);
             deckCardRepository.save(deckCardEntity);
+            var collection = getOrCreateCollection(deckEntity.getUser(), deckCardEntity.getCard());
+            if (checked && !deckCardEntity.getProxy()) {
+                if (collection.getQuantity() < deckCardEntity.getQuantity()) {
+                    collection.setQuantity(deckCardEntity.getQuantity());
+                    userCardCollectionRepository.save(collection);
+                }
+                adjustAssignment(collection.getId(), deckId, deckCardEntity.getQuantity());
+            } else if (!deckCardEntity.getProxy()) {
+                adjustAssignment(collection.getId(), deckId, -deckCardEntity.getQuantity());
+            }
+
         } catch (Exception ex) {
             log.warn("Failed to update card checked state for card {} in deck {}", cardId, deckId, ex);
             return false;
@@ -242,7 +300,91 @@ public class DeckService {
         }
     }
 
+    @Transactional
+    public boolean updateDeckCardCheckedAny(UUID deckId, UUID cardId, String zone, Integer quantity) {
+        // 1. Load clicked printing
+        CardEntity clicked = cardRepository.findById(cardId).orElseThrow(() -> new IllegalArgumentException("Card not found"));
+        String oracleId = clicked.getOracleId();
+        String clickedSet = clicked.getSetCode();
+        // 2. Load all deck entries for this oracle_id
+        List<DeckCardEntity> entries = deckCardRepository.findAllByDeckIdAndOracleId(deckId, oracleId);
+        DeckEntity deck = entries.getFirst().getDeckEntity();
+
+        // 3. Check if any entry already uses this printing's set
+        DeckCardEntity sameSetEntry = entries.stream()
+                .filter(e -> {
+                    CardEntity c = cardRepository.findById(e.getCard().getId()).orElse(null);
+                    return c != null && clickedSet.equals(c.getSetCode());
+                })
+                .findFirst()
+                .orElse(null);
+
+        if (sameSetEntry != null) {
+            // 4. Same set → update quantity
+            sameSetEntry.setChecked(true);
+            deckCardRepository.save(sameSetEntry);
+            return true;
+        }
+        // 5. Different set → split entries
+        DeckCardEntity existing = entries.stream().findFirst().orElse(null);
+        if (existing != null) {
+            int existingQty = existing.getQuantity();
+            if (existingQty > quantity) {
+                // Reduce existing entry
+                existing.setQuantity(existingQty - quantity);
+                deckCardRepository.save(existing);
+            } else {
+                // Remove existing entry entirely
+                deckCardRepository.deleteByPrimaryKey(existing.getId().getDeckId(), existing.getId().getCardId(), existing.getId().getLocation());
+            }
+        }
+
+        // 6. Create new entry for clicked printing
+        DeckCardEntity newEntry = new DeckCardEntity();
+        DeckCardId deckCardId = new DeckCardId();
+        deckCardId.setCardId(clicked.getId());
+        deckCardId.setDeckId(deck.getId());
+        deckCardId.setLocation(zone);
+        newEntry.setId(deckCardId);
+        newEntry.setDeckEntity(deck);
+        newEntry.setCard(clicked);
+        newEntry.setQuantity(quantity);
+        newEntry.setChecked(true);
+        deckCardRepository.save(newEntry);
+        return true;
+    }
+
     public List<UserLandGroupReportDto> getLandAuditForUser(Long userId) {
         return landGroupReportRepository.getUserLandGroupReport(userId);
+    }
+
+    private UserCardCollectionEntity getOrCreateCollection(User user, CardEntity card) {
+        return userCardCollectionRepository.findByUserAndCard(user, card)
+                .orElseGet(() -> {
+                    var e = new UserCardCollectionEntity();
+                    e.setUser(user);
+                    e.setCard(card);
+                    e.setQuantity(0);
+                    return userCardCollectionRepository.save(e);
+                });
+    }
+
+    private void adjustAssignment(UUID collectionId, UUID deckId, int delta) {
+        var assignments = userCardDeckAssignmentRepository.findByDeckIdAndUserCollectionId(deckId, collectionId);
+        UserCardDeckAssignmentEntity assignment;
+        if (assignments.isEmpty()) {
+            assignment = new UserCardDeckAssignmentEntity();
+            assignment.setUserCollectionId(collectionId);
+            assignment.setDeckId(deckId);
+            assignment.setAssignedQuantity(0);
+        } else {
+            assignment = assignments.getFirst();
+        }
+        int newQty = assignment.getAssignedQuantity() + delta;
+        if (newQty < 0) {
+            newQty = 0;
+        }
+        assignment.setAssignedQuantity(newQty);
+        userCardDeckAssignmentRepository.save(assignment);
     }
 }

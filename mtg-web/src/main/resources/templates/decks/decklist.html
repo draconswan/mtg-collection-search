@@ -142,6 +142,7 @@
                                            th:id="'qty_' + ${cardEntry.index}"
                                            th:data-card-id="${cardEntry.card.id}"
                                            th:data-deck-id="${deckId}"
+                                           th:data-zone="${zoneEntry.key}"
                                            th:data-type="${typeEntry.key}"
                                            min="1"
                                            th:value="${cardEntry.quantity}"/>
@@ -169,7 +170,8 @@
                                     <button type="button"
                                             class="btn btn-sm btn-outline-danger delete-card-btn"
                                             th:data-card-id="${cardEntry.card.id}"
-                                            th:data-deck-id="${deckId}">
+                                            th:data-deck-id="${deckId}"
+                                            th:data-zone="${zoneEntry.key}">
                                         <i class="bi bi-x-lg"></i>
                                     </button>
                                 </div>
