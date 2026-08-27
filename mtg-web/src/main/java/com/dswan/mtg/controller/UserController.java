@@ -1,9 +1,9 @@
 package com.dswan.mtg.controller;
 
+import com.dswan.mtg.domain.cards.Card;
 import com.dswan.mtg.domain.cards.DeckFormats;
-import com.dswan.mtg.domain.entity.User;
-import com.dswan.mtg.domain.entity.UserDetailsDto;
-import com.dswan.mtg.domain.entity.UserLandGroupReportDto;
+import com.dswan.mtg.domain.entity.*;
+import com.dswan.mtg.domain.mapper.CardMapper;
 import com.dswan.mtg.dto.DeckSummaryView;
 import com.dswan.mtg.dto.UncheckedCardView;
 import com.dswan.mtg.service.DeckService;
@@ -81,6 +81,17 @@ public class UserController {
         model.addAttribute("landAudit", audit);
         model.addAttribute("pageTitle", "User Land Audit Report");
         return "decks/land-audit";
+    }
+
+    @GetMapping("/decks/proxy-audit")
+    public String proxyAudit(@AuthenticationPrincipal UserDetailsDto details, Model model) {
+        User user = details.getUser();
+        List<UserProxyReportDto> audit = deckService.getProxyAuditForUser(user.getId());
+        Long proxyCount = audit.stream().mapToLong(UserProxyReportDto::totalCount).sum();
+        model.addAttribute("proxyAudit", audit);
+        model.addAttribute("pageTitle", "User Proxy Audit Report");
+        model.addAttribute("proxyCount", proxyCount);
+        return "decks/proxy-audit";
     }
 
     @GetMapping("/decks/all-missing")

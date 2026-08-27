@@ -10,6 +10,7 @@ import com.dswan.mtg.dto.CardSetDTO;
 import com.dswan.mtg.dto.CmcGroupDTO;
 import com.dswan.mtg.dto.ColorGroupDTO;
 import com.dswan.mtg.dto.RarityGroupDTO;
+import com.dswan.mtg.model.DeckViewModel;
 import com.dswan.mtg.repository.CardRepository;
 import com.dswan.mtg.util.CardColorComparator;
 import com.dswan.mtg.util.CardNameNormalizer;
@@ -192,7 +193,7 @@ public class CardProcessingService {
     // ------------------------------------------------------------
     // 3. Decklist builder
     // ------------------------------------------------------------
-    public Tuple<List<CardEntry>, List<String>> buildDecklist(String rawInput) {
+    public DeckViewModel buildDecklist(String rawInput) {
         List<ParsedCardLine> parsed = parseLines(rawInput);
         List<CardEntry> entries = new ArrayList<>();
         List<String> cardsNotFound = new ArrayList<>();
@@ -226,11 +227,9 @@ public class CardProcessingService {
             return index >= 0 ? index : TYPE_ORDER.size();
         });
 
-        return new Tuple<>(
-                entries.stream()
-                        .sorted(byType.thenComparing(e -> e.getCard().getDisplayName(), String.CASE_INSENSITIVE_ORDER))
-                        .toList(),
-                cardsNotFound);
+        return DeckViewModel.fromRawDecklist(entries.stream()
+                .sorted(byType.thenComparing(e -> e.getCard().getDisplayName(), String.CASE_INSENSITIVE_ORDER))
+                .toList(), cardsNotFound);
     }
 
     static Card chooseBestPrinting(List<Card> candidates, ParsedCardLine line) {

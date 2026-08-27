@@ -4,6 +4,7 @@ import com.dswan.mtg.domain.cards.*;
 import com.dswan.mtg.domain.model.CardStateForm;
 import com.dswan.mtg.domain.model.DeckStateForm;
 import com.dswan.mtg.domain.model.GlobalCheckedStateForm;
+import com.dswan.mtg.model.DeckViewModel;
 import com.dswan.mtg.service.DeckBuilderService;
 import com.dswan.mtg.service.DeckService;
 import com.dswan.mtg.util.DeckProcessingUtil;
@@ -13,10 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -36,52 +34,8 @@ public class DeckManagementController {
     @GetMapping("/deck/{deckId}")
     public String showSavedDeck(@PathVariable String deckId, Model model) {
         Deck deck = deckService.getDeck(deckId);
-        DeckFormat format = DeckFormat.fromString(deck.getDeckType());
-        AtomicInteger idx = new AtomicInteger();
-        List<CardEntry> cardEntries = deck.getCards().stream()
-                .map(card -> new CardEntry(idx.getAndIncrement(), card.getQuantity(), card))
-                .toList();
-        Map<DeckZone, Map<String, List<CardEntry>>> zonedGroups = new LinkedHashMap<>();
-        for (DeckZone zone : format.zones) {
-            List<CardEntry> zoneEntries = cardEntries.stream()
-                    .filter(e -> DeckZone.fromString(e.getCard().getLocation()) == zone)
-                    .toList();
-            Map<String, Integer> typeQuantities = new LinkedHashMap<>();
-            Map<String, List<CardEntry>> orderedCardGroups = DeckProcessingUtil.getOrderedCardGroups(zoneEntries, typeQuantities);
-            zonedGroups.put(zone, orderedCardGroups);
-        }
-        int totalQuantity = cardEntries.stream()
-                .mapToInt(CardEntry::getQuantity)
-                .sum();
-        Long totalProxies = cardEntries.stream()
-                .filter(c -> c.getCard().isProxy())
-                .count();
-        DeckStateForm form = new DeckStateForm();
-        form.setDeckId(deckId);
-        form.setDeckName(deck.getName());
-        form.setDeckFormat(deck.getType());
-        form.setCards(deck.getCards()
-                .stream()
-                .map(card -> {
-                    CardStateForm cardStateForm = new CardStateForm();
-                    cardStateForm.setCardId(card.getId());
-                    cardStateForm.setQuantity(card.getQuantity());
-                    cardStateForm.setChecked(card.isChecked());
-                    cardStateForm.setZone(card.getLocation());
-                    return cardStateForm;
-                })
-                .toList());
-        model.addAttribute("zonedGroups", zonedGroups);
-        model.addAttribute("totalQuantity", totalQuantity);
-        model.addAttribute("totalProxies", totalProxies);
-        model.addAttribute("deckName", deck.getName());
-        model.addAttribute("deckFormat", deck.getType());
-        model.addAttribute("pageTitle", deck.getName());
-        model.addAttribute("cardsNotFound", List.of());
-        model.addAttribute("deckId", deckId);
-        model.addAttribute("deckStateForm", form);
-        model.addAttribute("deckFormat", format);
-        model.addAttribute("deckFormats", DeckFormats.FORMATS);
+        DeckViewModel vm = DeckViewModel.buildDeckViewModel(deck);
+        model.addAttribute("deckView", vm);
         return "decks/decklist";
     }
 

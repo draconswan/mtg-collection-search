@@ -9,7 +9,6 @@ import com.dswan.mtg.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +28,7 @@ public class DeckService {
     private final DeckRepository deckRepository;
     private final DeckCardRepository deckCardRepository;
     private final UserRepository userRepository;
-    private final LandGroupReportRepository landGroupReportRepository;
+    private final CardReportRepository cardReportRepository;
     private final UserCardCollectionRepository userCardCollectionRepository;
     private final UserCardDeckAssignmentRepository userCardDeckAssignmentRepository;
 
@@ -355,7 +354,11 @@ public class DeckService {
     }
 
     public List<UserLandGroupReportDto> getLandAuditForUser(Long userId) {
-        return landGroupReportRepository.getUserLandGroupReport(userId);
+        return cardReportRepository.getUserLandGroupReport(userId);
+    }
+
+    public List<UserProxyReportDto> getProxyAuditForUser(Long userId) {
+        return cardReportRepository.getUserProxiesReport(userId);
     }
 
     private UserCardCollectionEntity getOrCreateCollection(User user, CardEntity card) {

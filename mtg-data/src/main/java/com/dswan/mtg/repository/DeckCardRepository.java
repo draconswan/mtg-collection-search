@@ -16,6 +16,15 @@ import java.util.UUID;
 public interface DeckCardRepository extends JpaRepository<DeckCardEntity, DeckCardId> {
 
     @Query("""
+                SELECT dc
+                FROM DeckCardEntity dc
+                JOIN DeckEntity d ON dc.id.deckId = d.id
+                WHERE d.user.id = :userId
+                  AND dc.proxy = TRUE
+            """)
+    List<DeckCardEntity> getProxiesByUser(@Param("userId") Long userId);
+
+    @Query("""
                 SELECT COUNT(dc)
                 FROM DeckCardEntity dc
                 JOIN DeckEntity d ON dc.id.deckId = d.id
